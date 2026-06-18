@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components  # 🔥 캘린더 위젯을 위한 컴포넌트 추가
 import yfinance as yf
 import pandas as pd
 import requests
@@ -35,7 +36,7 @@ if not st.session_state.authenticated:
     st.stop() 
 
 # ==========================================
-# 3. 프리미엄 CSS (무한 전광판 & 대시보드)
+# 3. 프리미엄 CSS
 # ==========================================
 st.markdown("""
 <style>
@@ -58,12 +59,16 @@ st.markdown("""
     .news-box:hover { background-color: #252B3B; transform: translateX(5px); }
     .news-title { font-size: 14px; font-weight: bold; color: #F1F5F9; line-height: 1.4; margin-bottom: 8px; }
     .news-meta { font-size: 11px; color: #94A3B8; display: flex; justify-content: space-between; }
+    
+    .history-card-up { background-color: rgba(239, 68, 68, 0.1); border: 1px solid #EF4444; padding: 12px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+    .history-card-down { background-color: rgba(59, 130, 246, 0.1); border: 1px solid #3B82F6; padding: 12px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+    
     a { text-decoration: none !important; }
 </style>
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 4. 실시간 무빙 티커 (1분 초정밀)
+# 4. 실시간 무빙 티커
 # ==========================================
 @st.cache_data(ttl=60)
 def get_ticker_data():
@@ -89,12 +94,45 @@ def get_ticker_data():
 
 st.markdown(get_ticker_data(), unsafe_allow_html=True)
 
-# 메인 타이틀
 st.markdown("<h1 style='text-align: center; color: #F59E0B; font-weight: 900; margin-bottom: 0;'>👑 남현석과 함께 100억 만들기</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #94A3B8; margin-bottom: 30px;'>WallStreet v11.1 | 지수 ETF 전면 숙청 및 탐욕/공포 지수 실시간 연동</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #94A3B8; margin-bottom: 30px;'>WallStreet v11.3 | 거시경제 일정 캘린더 탑재 & 무결점 퀀트 엔진</p>", unsafe_allow_html=True)
 
 # ==========================================
-# 5. 실시간 공포/탐욕 지수 계산 (Fear & Greed)
+# 5. 데이터 저장 및 뉴스 모듈
+# ==========================================
+HISTORY_FILE = "quant_history.json"
+def load_history():
+    if os.path.exists(HISTORY_FILE):
+        with open(HISTORY_FILE, "r", encoding="utf-8") as f: return json.load(f)
+    return None
+def save_history(top3_data):
+    save_data = [{"티커": item['티커'], "추천가": item['현재가'], "시간": datetime.now().strftime("%Y-%m-%d %H:%M")} for item in top3_data]
+    with open(HISTORY_FILE, "w", encoding="utf-8") as f: json.dump(save_data, f, ensure_ascii=False, indent=4)
+
+@st.cache_data(ttl=60)
+def get_live_clickable_news(keyword):
+    try:
+        url = f"https://news.google.com/rss/search?q={keyword}+when:1d&hl=ko&gl=KR&ceid=KR:ko"
+        res = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'}, timeout=5)
+        root = ET.fromstring(res.content)
+        news_list = []
+        now = datetime.now(timezone.utc)
+        for item in root.findall('.//item')[:8]:
+            title, link, pubDate_str = item.find('title').text, item.find('link').text, item.find('pubDate').text
+            source = "글로벌 매체"
+            if " - " in title: title, source = title.rsplit(" - ", 1)
+            try:
+                pub_tuple = email.utils.parsedate_tz(pubDate_str)
+                pub_time = datetime.fromtimestamp(email.utils.mktime_tz(pub_tuple), timezone.utc)
+                diff_sec = (now - pub_time).total_seconds()
+                time_str = f"{int(diff_sec//60)}분 전" if diff_sec < 3600 else f"{int(diff_sec//3600)}시간 전"
+            except: time_str = "방금 전"
+            news_list.append({"title": title, "link": link, "source": source, "time": time_str})
+        return news_list
+    except: return []
+
+# ==========================================
+# 6. 실시간 공포/탐욕 지수
 # ==========================================
 @st.cache_data(ttl=60)
 def get_fear_greed_index():
@@ -102,13 +140,11 @@ def get_fear_greed_index():
         spy = yf.download('^GSPC', period='6mo', progress=False)['Close']
         vix = yf.download('^VIX', period='5d', progress=False)['Close'].iloc[-1]
         
-        # SPY RSI 계산
         delta = spy.diff()
         up = delta.clip(lower=0).ewm(com=13).mean().iloc[-1]
         down = -1 * delta.clip(upper=0).ewm(com=13).mean().iloc[-1]
         rsi = 100 - (100 / (1 + up / down))
         
-        # VIX 점수화 (10=탐욕 100점, 30=공포 0점)
         vix_score = max(0, min(100, 100 - (vix - 10) * 5))
         fgi = int((rsi + vix_score) / 2)
         
@@ -122,14 +158,14 @@ def get_fear_greed_index():
 fgi_score, fgi_text, fgi_color = get_fear_greed_index()
 
 # ==========================================
-# 6. 헤지펀드 AI 퀀트 엔진 (순수 개별주만 포착)
+# 7. 월가 상위 0.01% AI 퀀트 엔진
 # ==========================================
-# 🔥 SSO, QLD, USD 등 모든 지수 추종 2배 레버리지 삭제 (오직 개별주 대장만)
 BULL_STOCKS = [
     "AAPL", "MSFT", "NVDA", "GOOGL", "AMZN", "META", "TSLA",
     "AVGO", "TSM", "AMD", "QCOM", "ASML", "AMAT", "MU", "LRCX", "INTC", "ARM", "SMCI", "SIMO", "WDC", "TXN", "NXPI",
     "CRM", "ADBE", "NFLX", "CSCO", "ORCL", "NOW", "INTU", "UBER", "SNOW", "PLTR", "CRWD", "PANW", "FTNT", "DDOG", "NET", "MDB", "TEAM", "WDAY",
-    "V", "MA", "JPM", "BAC", "WFC", "GS", "MS", "AXP", "PYPL", "SQ", "COIN", "MARA", "RIOT", "MSTR", "HOOD", "SOFI", "AFRM"
+    "V", "MA", "JPM", "BAC", "WFC", "GS", "MS", "AXP", "PYPL", "SQ", "COIN", "MARA", "RIOT", "MSTR", "HOOD", "SOFI", "AFRM", 
+    "RKLB", "ASTS", "LUNR"
 ]
 BEAR_ETFS = ["SH", "PSQ", "QID"]
 
@@ -155,13 +191,11 @@ def analyze_hedgefund_signals():
             df['MA150'], df['MA200'] = df['Close'].rolling(window=150).mean(), df['Close'].rolling(window=200).mean()
             df['High52'], df['Low52'] = df['High'].rolling(window=250).max(), df['Low'].rolling(window=250).min()
             
-            # ATR (스마트 손절)
             tr1 = df['High'] - df['Low']
             tr2 = np.abs(df['High'] - df['Close'].shift())
             tr3 = np.abs(df['Low'] - df['Close'].shift())
             df['ATR'] = np.max(pd.concat([tr1, tr2, tr3], axis=1), axis=1).rolling(14).mean()
             
-            # 👑 매수 폭발 점수 (구 '압축률')
             df['BB_std'] = df['Close'].rolling(window=20).std()
             df['BB_Width'] = (df['BB_std'] * 4) / df['MA20']
             bb_min_120, bb_max_120 = df['BB_Width'].rolling(120).min(), df['BB_Width'].rolling(120).max()
@@ -174,12 +208,10 @@ def analyze_hedgefund_signals():
             change_str = f"🔥 +{change_pct:.2f}%" if change_pct > 0 else f"❄️ {change_pct:.2f}%"
             atr_stop_loss = last['Close'] - (last['ATR'] * 2)
             
-            # RS 주도력 및 매수 점수 계산
             stock_return_6m = (last['Close'] - df['Close'].iloc[-120]) / df['Close'].iloc[-120]
             rs_score = (stock_return_6m / spy_return_6m) * 100 if spy_return_6m > 0 else 100
             rs_rating = "👑 S급 대장주" if rs_score > 200 else "A급 주도주" if rs_score > 100 else "B급"
             
-            # 🔥 직관적인 '매수 폭발 점수' (1~100점)
             buy_score = int(max(0, min(100, (1 - last['BB_Percentile']) * 100)))
             
             base_info = {
@@ -188,8 +220,7 @@ def analyze_hedgefund_signals():
                 "손절가(ATR)": float(atr_stop_loss),
                 "당일등락": change_str, 
                 "시장 주도력": rs_rating,
-                "💥 매수 폭발 점수": f"{buy_score}점", # 🔥 점수 표기로 변경
-                "원가": float(last['Close'])
+                "💥 매수 폭발 점수": f"{buy_score}점",
             }
             
             if ticker in BULL_STOCKS:
@@ -197,8 +228,8 @@ def analyze_hedgefund_signals():
                               last['MA200'] > df['MA200'].iloc[-20] and last['Close'] > last['MA50'] and
                               last['Close'] >= last['Low52'] * 1.30 and last['Close'] >= last['High52'] * 0.75)
                 
-                is_vcp_extreme = buy_score >= 75 # 점수가 75점 이상(하위 25% 압축)일 때만
-                is_vol_dry = df['Volume'].iloc[-3:].mean() < (last['Vol_50MA'] * 0.8)
+                is_vcp_extreme = buy_score >= 70
+                is_vol_dry = df['Volume'].iloc[-3:].mean() < (last['Vol_50MA'] * 0.85)
                 is_near_ma20 = (last['MA20'] * 0.98 <= last['Close'] <= last['MA20'] * 1.05)
                 
                 if (current_vix < vix_limit) and is_uptrend and is_near_ma20 and is_vcp_extreme and is_vol_dry and (change_pct > 0):
@@ -217,7 +248,7 @@ def analyze_hedgefund_signals():
     return vcp_swing, bear_defense, momentum, current_vix, vix_limit
 
 # ==========================================
-# 7. 메인 렌더링 및 프리미엄 UI
+# 8. 메인 렌더링 파트 (좌측)
 # ==========================================
 col_main, col_side = st.columns([7, 3])
 
@@ -227,10 +258,12 @@ if 'scanned' not in st.session_state:
 
 with col_main:
     if st.button("🚀 100억 엔진 가동 (순수 개별주 A+급만 포착)", use_container_width=True):
-        with st.spinner("지수 ETF 숙청 및 매수 폭발 점수 계산 중... (약 20초 소요)"):
+        with st.spinner("월가 0.01% 수학 알고리즘으로 전 종목 맵핑 중... (약 20초 소요)"):
             vcp_swing, bear_defense, momentum, current_vix, vix_limit = analyze_hedgefund_signals()
             st.session_state.vcp_swing = vcp_swing
             st.session_state.scanned = True
+            
+            if vcp_swing: save_history(pd.DataFrame(vcp_swing).sort_values("💥 매수 폭발 점수", ascending=False).head(3).to_dict('records'))
             
             safe_status = "🟢 공격 베팅 (안전)" if current_vix < vix_limit else "🔴 현금 관망 (위험)"
             
@@ -252,7 +285,7 @@ with col_main:
                     <div class='dash-sub'>{fgi_text}</div>
                 </div>
                 <div class='dash-card'>
-                    <div class='dash-title'>🛡️ PCE 매크로 방어벽</div>
+                    <div class='dash-title'>🛡️ 매크로 방어벽 (VIX)</div>
                     <div class='dash-value' style='color:#3B82F6;'>{safe_status}</div>
                     <div class='dash-sub'>현재 VIX: {current_vix:.2f} / 기준: {vix_limit}</div>
                 </div>
@@ -263,51 +296,67 @@ with col_main:
             
             def display_premium_data(data, msg):
                 if data:
-                    df = pd.DataFrame(data).drop(columns=['원가']).sort_values("💥 매수 폭발 점수", ascending=False)
+                    df = pd.DataFrame(data).sort_values("💥 매수 폭발 점수", ascending=False) if "💥 매수 폭발 점수" in pd.DataFrame(data).columns else pd.DataFrame(data)
                     df['현재가'] = df['현재가'].apply(lambda x: f"${x:,.2f}")
                     df['손절가(ATR)'] = df['손절가(ATR)'].apply(lambda x: f"${x:,.2f}")
                     st.dataframe(df, use_container_width=True, hide_index=True)
                 else: st.info(msg)
 
-            with tab1: display_premium_data(vcp_swing, "현재 VCP 압축(매수 폭발 점수 75점 이상)을 통과한 개별 주도주가 없습니다.")
+            with tab1: display_premium_data(vcp_swing, "현재 VCP 압축을 통과한 완벽한 개별 주도주가 없습니다.")
             with tab2: display_premium_data(momentum, "포켓 피봇(대량 거래 돌파) 개별 종목이 없습니다.")
             with tab3: display_premium_data(bear_defense, "현재 인버스 돌파 타점이 없습니다.")
 
 # ==========================================
-# 8. 우측 사이드바 (내 계좌 트래커 & 속보)
+# 9. 우측 사이드바 (거시경제 캘린더 & 검증 시스템)
 # ==========================================
 with col_side:
-    st.markdown("### 💼 나의 실시간 수익률 트래커")
-    st.markdown("<p style='font-size:12px; color:#8A94A6;'>진입하신 종목(티커)과 단가를 입력하시면 실시간 수익률이 계산됩니다.</p>", unsafe_allow_html=True)
+    # 🔥 신규 무기: 주간 월가 핵심 일정 (TradingView 실시간 캘린더 위젯)
+    st.markdown("### 📅 이번 주 월가 핵심 일정")
+    st.markdown("<p style='font-size:12px; color:#8A94A6; margin-bottom:10px;'>FOMC, 실적 발표, CPI 등 시장을 뒤흔들 중요 이벤트 (미국 한정)</p>", unsafe_allow_html=True)
     
-    if 'my_portfolio' not in st.session_state:
-        st.session_state.my_portfolio = pd.DataFrame([{"티커": "NXPI", "진입단가": 310.00}], columns=["티커", "진입단가"])
+    tv_widget = """
+    <div class="tradingview-widget-container" style="border-radius: 8px; overflow: hidden; border: 1px solid #2D3748;">
+      <div class="tradingview-widget-container__widget"></div>
+      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-events.js" async>
+      {
+      "colorTheme": "dark",
+      "isTransparent": true,
+      "width": "100%",
+      "height": "400",
+      "locale": "kr",
+      "importanceFilter": "0,1",
+      "countryFilter": "us"
+      }
+      </script>
+    </div>
+    """
+    components.html(tv_widget, height=400)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # 🕵️‍♂️ 직전 추천종목 검증
+    st.markdown("### 🕵️‍♂️ 시스템 자동 추천 검증")
+    past_history = load_history()
     
-    edited_df = st.data_editor(st.session_state.my_portfolio, num_rows="dynamic", use_container_width=True)
-    st.session_state.my_portfolio = edited_df
-    
-    if st.button("🔄 실시간 수익률 확인", use_container_width=True):
-        for index, row in edited_df.iterrows():
-            ticker = str(row['티커']).upper().strip()
+    if past_history:
+        st.caption(f"기록 시간: {past_history[0]['시간']}")
+        for item in past_history:
+            ticker, old_price = item['티커'], item['추천가']
             try:
-                entry_price = float(row['진입단가'])
                 curr_price = yf.Ticker(ticker).history(period="1d")['Close'].iloc[-1]
-                profit_pct = ((curr_price - entry_price) / entry_price) * 100
+                profit_pct = ((curr_price - old_price) / old_price) * 100
                 color, arrow = ("#EF4444", "🔥") if profit_pct > 0 else ("#3B82F6", "❄️")
+                bg_class = "history-card-up" if profit_pct > 0 else "history-card-down"
                 
                 st.markdown(f"""
-                <div class='news-box' style='border-left: 4px solid {color};'>
-                    <div style='display:flex; justify-content:space-between;'>
-                        <span style='font-weight:bold; font-size:16px;'>{ticker}</span>
-                        <span style='font-size:18px; font-weight:bold; color:{color};'>{arrow} {profit_pct:+.2f}%</span>
-                    </div>
-                    <div style='font-size:12px; color:#94A3B8; margin-top:4px;'>
-                        매수단가 ${entry_price:,.2f} ➔ 현재가 ${curr_price:,.2f}
-                    </div>
+                <div class='{bg_class}'>
+                    <div><div style='font-weight:bold; font-size:16px;'>{ticker}</div>
+                    <div style='font-size:11px; color:#94A3B8;'>추천가 ${old_price:,.2f} ➔ 현재가 ${curr_price:,.2f}</div></div>
+                    <div style='font-size:18px; font-weight:bold; color:{color};'>{arrow} {profit_pct:+.2f}%</div>
                 </div>
                 """, unsafe_allow_html=True)
-            except:
-                if ticker: st.error(f"{ticker}: 데이터를 불러올 수 없습니다.")
+            except: pass
+    else: st.info("스캔을 돌려 시스템에 종목을 저장해 주십시오.")
 
     st.markdown("<br>", unsafe_allow_html=True)
     news_tab1, news_tab2 = st.tabs(["🌐 100억 거시경제", "🚨 주도주 속보"])
