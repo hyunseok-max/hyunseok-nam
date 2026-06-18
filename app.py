@@ -7,31 +7,51 @@ import email.utils
 from datetime import datetime, timezone
 import json
 import os
+import numpy as np
 
 # ==========================================
 # 1. 터미널 UI 및 다크모드 세팅
 # ==========================================
 st.set_page_config(page_title="남현석의 월가 퀀트 터미널", layout="wide", initial_sidebar_state="collapsed")
+
+# ==========================================
+# 🔒 2. 통제실 보안 암호 시스템
+# ==========================================
+if 'authenticated' not in st.session_state:
+    st.session_state.authenticated = False
+
+if not st.session_state.authenticated:
+    st.markdown("<br><br><br><br>", unsafe_allow_html=True)
+    col1, col2, col3 = st.columns([1, 1, 1])
+    with col2:
+        st.markdown("<h2 style='text-align: center; color: #F59E0B;'>🔒 통제실 보안 구역</h2>", unsafe_allow_html=True)
+        pwd = st.text_input("암호 입력", type="password")
+        if st.button("진입 (ENTER)", use_container_width=True):
+            if pwd == "100억":  
+                st.session_state.authenticated = True
+                st.rerun()
+            else:
+                st.error("🚨 암호가 일치하지 않습니다. 접근을 차단합니다.")
+    st.stop() 
+
+# ==========================================
+# 3. CSS 스타일링
+# ==========================================
 st.markdown("""
 <style>
     .stApp { background-color: #0F111A; color: #FFFFFF; font-family: 'Pretendard', sans-serif; }
-    
     .macro-container { display: flex; gap: 15px; margin-bottom: 20px; }
     .macro-box { background-color: #1A1D27; padding: 15px; border-radius: 10px; flex: 1; border-top: 3px solid #3B82F6; }
     .macro-title { font-size: 13px; color: #8A94A6; font-weight: bold; margin-bottom: 5px; }
     .macro-value { font-size: 20px; font-weight: bold; color: #FFFFFF; }
-    
     .metric-box { background-color: #1A1D27; padding: 15px; border-radius: 10px; text-align: center; border: 1px solid #2D3243; }
     .metric-title { color: #8A94A6; font-size: 13px; margin-bottom: 5px; font-weight: bold; }
     .metric-value { font-size: 24px; font-weight: bold; color: #FFFFFF; }
-    
     .history-card-up { background-color: rgba(239, 68, 68, 0.1); border: 1px solid #EF4444; padding: 12px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
     .history-card-down { background-color: rgba(59, 130, 246, 0.1); border: 1px solid #3B82F6; padding: 12px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
-    
     .top-pick-card { background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%); border: 1px solid #F59E0B; padding: 15px; border-radius: 10px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
     .top-pick-ticker { font-size: 18px; font-weight: bold; color: #F59E0B; }
     .top-pick-price { font-size: 15px; color: #FFFFFF; }
-    
     .news-box { background-color: #1A1D27; padding: 12px 15px; margin-bottom: 10px; border-radius: 8px; border-left: 4px solid #3B82F6; transition: 0.2s; }
     .news-box:hover { background-color: #24283B; transform: translateX(3px); }
     .news-title { font-size: 14px; font-weight: bold; color: #F8FAFC; line-height: 1.4; margin-bottom: 6px; }
@@ -40,35 +60,32 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-st.title("🎯 남현석의 실전 퀀트 터미널 (WallStreet v9.5)")
-st.markdown("거시경제 모니터링 및 주도주 스윙 승률 극대화 알고리즘 탑재")
+st.title("🎯 남현석의 실전 퀀트 터미널 (WallStreet v10.0)")
+st.markdown("월가 최상위 퀀트 펀드 매크로 오버레이 및 변동성 축소(VCP) 타점 엔진 장착")
 
 # ==========================================
-# 2. 직전 추천 종목(TOP 3) 수익률 검증 파일 시스템
+# 4. 직전 추천 종목 수익률 검증 파일 시스템
 # ==========================================
 HISTORY_FILE = "quant_history.json"
 
 def load_history():
     if os.path.exists(HISTORY_FILE):
-        with open(HISTORY_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
+        with open(HISTORY_FILE, "r", encoding="utf-8") as f: return json.load(f)
     return None
 
 def save_history(top3_data):
-    save_data = []
-    for item in top3_data:
-        save_data.append({"티커": item['티커'], "추천가": item['원가'], "시간": datetime.now().strftime("%Y-%m-%d %H:%M")})
-    with open(HISTORY_FILE, "w", encoding="utf-8") as f:
-        json.dump(save_data, f, ensure_ascii=False, indent=4)
+    save_data = [{"티커": item['티커'], "추천가": item['원가'], "시간": datetime.now().strftime("%Y-%m-%d %H:%M")} for item in top3_data]
+    with open(HISTORY_FILE, "w", encoding="utf-8") as f: json.dump(save_data, f, ensure_ascii=False, indent=4)
 
 # ==========================================
-# 3. 시장 거시경제(매크로) 전광판
+# 5. 시장 거시경제(매크로) 전광판 (VIX 오류 완벽 수정)
 # ==========================================
 @st.cache_data(ttl=300)
 def get_macro_data():
     try:
-        tickers = ['^IXIC', '^GSPC', '^VIX', 'TLT'] # 나스닥, S&P, 공포지수, 장기채(금리)
-        data = yf.download(tickers, period="5d", progress=False)['Close']
+        tickers = ['^IXIC', '^GSPC', '^VIX', 'TLT']
+        # ffill() 과 dropna()를 통해 NaN 결측치 버그 완벽 제거
+        data = yf.download(tickers, period="5d", progress=False)['Close'].ffill().dropna()
         macro = {}
         for t in tickers:
             last = float(data[t].iloc[-1])
@@ -76,8 +93,7 @@ def get_macro_data():
             pct = ((last - prev) / prev) * 100
             macro[t] = {"price": last, "pct": pct}
         return macro
-    except:
-        return None
+    except: return None
 
 macro_data = get_macro_data()
 if macro_data:
@@ -88,7 +104,7 @@ if macro_data:
             <div class='macro-value'>{macro_data['^IXIC']['price']:,.2f} <span style='font-size:14px; color:{"#EF4444" if macro_data['^IXIC']['pct']<0 else "#10B981"};'>({macro_data['^IXIC']['pct']:+.2f}%)</span></div>
         </div>
         <div class='macro-box' style='border-top-color: #F59E0B;'>
-            <div class='macro-title'>🚨 VIX 공포지수</div>
+            <div class='macro-title'>🚨 VIX 공포지수 (매크로 방어막)</div>
             <div class='macro-value'>{macro_data['^VIX']['price']:.2f} <span style='font-size:14px; color:{"#10B981" if macro_data['^VIX']['pct']<0 else "#EF4444"};'>({macro_data['^VIX']['pct']:+.2f}%)</span></div>
         </div>
         <div class='macro-box' style='border-top-color: #8B5CF6;'>
@@ -99,7 +115,7 @@ if macro_data:
     """, unsafe_allow_html=True)
 
 # ==========================================
-# 4. 실시간 뉴스 엔진
+# 6. 실시간 뉴스 엔진
 # ==========================================
 @st.cache_data(ttl=60)
 def get_live_clickable_news(keyword):
@@ -107,18 +123,14 @@ def get_live_clickable_news(keyword):
         url = f"https://news.google.com/rss/search?q={keyword}+when:1d&hl=ko&gl=KR&ceid=KR:ko"
         res = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'}, timeout=5)
         root = ET.fromstring(res.content)
-        
         news_list = []
         now = datetime.now(timezone.utc)
         for item in root.findall('.//item')[:8]:
             title = item.find('title').text
             link = item.find('link').text
             pubDate_str = item.find('pubDate').text
-            
             source = "글로벌 매체"
-            if " - " in title:
-                title, source = title.rsplit(" - ", 1)
-                
+            if " - " in title: title, source = title.rsplit(" - ", 1)
             try:
                 pub_tuple = email.utils.parsedate_tz(pubDate_str)
                 pub_time = datetime.fromtimestamp(email.utils.mktime_tz(pub_tuple), timezone.utc)
@@ -127,60 +139,50 @@ def get_live_clickable_news(keyword):
                 elif diff_sec < 86400: time_str = f"{int(diff_sec//3600)}시간 전"
                 else: time_str = "오늘"
             except: time_str = "방금 전"
-
             news_list.append({"title": title, "link": link, "source": source, "time": time_str})
         return news_list
     except: return []
 
 # ==========================================
-# 5. 글로벌 핵심 주도주 100선 + 승률 최적화 타점 엔진
+# 7. 최상위 퀀트 엔진: VCP + 매크로 필터 + ATR 손절가
 # ==========================================
 TARGET_STOCKS = [
-    # 레버리지 및 시장 지수 ETF
     "SPY", "QQQ", "DIA", "IWM", "SOXX", "TQQQ", "SOXL", "NVDL", "TECL", "FNGU", "BULZ",
-    # M7 및 빅테크
     "AAPL", "MSFT", "NVDA", "GOOGL", "AMZN", "META", "TSLA",
-    # 인공지능 & 반도체 핵심
     "AVGO", "TSM", "AMD", "QCOM", "ASML", "AMAT", "MU", "LRCX", "INTC", "ARM", "SMCI", "SIMO", "WDC", "TXN", "NXPI",
-    # 거대 소프트웨어 & 클라우드
     "CRM", "ADBE", "NFLX", "CSCO", "ORCL", "NOW", "INTU", "UBER", "SNOW", "PLTR", "CRWD", "PANW", "FTNT", "DDOG", "NET", "MDB", "TEAM", "WDAY",
-    # 금융 & 핀테크 & 코인
     "V", "MA", "JPM", "BAC", "WFC", "GS", "MS", "AXP", "PYPL", "SQ", "COIN", "MARA", "RIOT", "MSTR", "HOOD", "SOFI", "AFRM", "UPST",
-    # 바이오 & 헬스케어
     "LLY", "NVO", "UNH", "JNJ", "ABBV", "MRK", "TMO", "DHR", "PFE", "VRTX", "REGN", "MRNA", "ISRG", "SYK",
-    # 전통 우량주 & 에너지 & 로보틱스
     "WMT", "COST", "PG", "KO", "PEP", "MCD", "NKE", "SBUX", "XOM", "CVX", "GE", "CAT", "BA", "DE",
     "RIVN", "LCID", "NIO", "XPEV", "LI", "JOBY", "ACHR", "IONQ", "RGTI", "RBLX", "U", "DKNG", "CVNA"
 ]
 
-def analyze_practical_signals():
+def analyze_practical_signals(vix_level):
     data = yf.download(TARGET_STOCKS, period="6mo", group_by='ticker', progress=False)
-    swing, momentum, accum, reversal = [], [], [], []
+    vcp_swing, momentum, accum, reversal = [], [], [], []
     
     for ticker in TARGET_STOCKS:
         try:
             df = data[ticker].dropna()
             if len(df) < 60: continue
             
-            # --- 1. 기본 이동평균선 ---
+            # 기본 이평선 및 볼린저 밴드 (VCP 변동성 축소 확인용)
             df['MA20'] = df['Close'].rolling(window=20).mean()
             df['MA50'] = df['Close'].rolling(window=50).mean()
             df['MA120'] = df['Close'].rolling(window=120).mean()
+            df['BB_std'] = df['Close'].rolling(window=20).std()
+            df['BB_Width'] = (df['BB_std'] * 4) / df['MA20'] # 밴드폭
+            
+            # ATR (Average True Range) - 기관급 지능형 손절선 계산용
+            high_low = df['High'] - df['Low']
+            high_close = np.abs(df['High'] - df['Close'].shift())
+            low_close = np.abs(df['Low'] - df['Close'].shift())
+            ranges = pd.concat([high_low, high_close, low_close], axis=1)
+            true_range = np.max(ranges, axis=1)
+            df['ATR'] = true_range.rolling(14).mean()
+            
+            # 거래량 및 수급 지표 (MFI)
             df['Vol_20MA'] = df['Volume'].rolling(window=20).mean()
-            
-            # --- 2. RSI 및 StochRSI (윗꼬리 함정 회피용) ---
-            delta = df['Close'].diff()
-            ema_up = delta.clip(lower=0).ewm(com=13, adjust=False).mean()
-            ema_down = (-1 * delta.clip(upper=0)).ewm(com=13, adjust=False).mean()
-            df['RSI'] = 100 - (100 / (1 + (ema_up / ema_down)))
-            
-            min_rsi = df['RSI'].rolling(window=14).min()
-            max_rsi = df['RSI'].rolling(window=14).max()
-            df['StochRSI'] = (df['RSI'] - min_rsi) / (max_rsi - min_rsi)
-            df['K'] = df['StochRSI'].rolling(window=3).mean() * 100
-            df['D'] = df['K'].rolling(window=3).mean()
-            
-            # --- 3. MFI (자금 유출입 확인 - 가짜 상승 필터링) ---
             typical_price = (df['High'] + df['Low'] + df['Close']) / 3
             raw_money_flow = typical_price * df['Volume']
             money_flow_pos = raw_money_flow.where(df['Close'] > df['Close'].shift(1), 0)
@@ -196,64 +198,67 @@ def analyze_practical_signals():
             change_str = f"🔥 +{change_pct:.2f}%" if change_pct > 0 else f"❄️ {change_pct:.2f}%"
             vol_ratio = float(last['Volume'] / last['Vol_20MA'])
             
-            # 기계적 손절선 설정 (-7% 기준)
-            stop_loss = float(last['Close'] * 0.93)
+            # 프로 퀀트 트레이더들의 2x ATR 추적 손절선
+            atr_stop_loss = float(last['Close'] - (last['ATR'] * 2))
             
             base_info = {
                 "티커": ticker, 
                 "현재가": f"${float(last['Close']):.2f}", 
-                "손절선(-7%)": f"${stop_loss:.2f}",
+                "ATR 스마트손절": f"${atr_stop_loss:.2f}",
                 "당일 등락률": change_str, 
                 "변동%": change_pct,
                 "원가": float(last['Close'])
             }
             
-            # [전략 1] 100억 참모 '20일선 콘크리트 눌림목' 스윙
-            is_near_ma20 = (last['MA20'] * 0.98 <= last['Close'] <= last['MA20'] * 1.03)
-            if is_near_ma20 and (change_pct > 0) and (last['K'] < 40) and (last['K'] > prev['K']) and (last['MFI'] < 50):
-                swing.append({**base_info, "타점": "20일선 완벽 눌림목", "승률기대": "⭐️⭐️⭐️⭐️⭐️"})
+            # [전략 1] 최상위 VCP(변동성 축소) + 20일선 지지 + 거시경제 안전
+            # 매크로 방어막: VIX가 25 이상이면 투기적 스윙 타점 전면 차단
+            is_vcp_tight = last['BB_Width'] < df['BB_Width'].rolling(20).mean().iloc[-1] # 밴드폭이 20일 평균보다 좁아짐(에너지 응축)
+            is_near_ma20 = (last['MA20'] * 0.99 <= last['Close'] <= last['MA20'] * 1.03)
+            if (vix_level < 25.0) and is_near_ma20 and is_vcp_tight and (change_pct > 0) and (last['MFI'] > prev['MFI']):
+                vcp_swing.append({**base_info, "타점": "VCP 폭풍전야 눌림목", "승률기대": "👑 S+ 급"})
                 
-            # [전략 2] 종가 MOC 돌파
-            if (last['Close'] > df['High'].rolling(20).max().iloc[-2]) and (vol_ratio >= 1.5) and (change_pct >= 3.0) and (last['K'] < 80):
-                momentum.append({**base_info, "타점": "종가 대량거래 돌파", "승률기대": "⭐️⭐️⭐️⭐️"})
+            # [전략 2] 기관 대량 수급 돌파 (모멘텀)
+            if (last['Close'] > df['High'].rolling(20).max().iloc[-2]) and (vol_ratio >= 2.0) and (change_pct >= 3.0):
+                momentum.append({**base_info, "타점": "기관 대량거래 돌파", "승률기대": "⭐️⭐️⭐️⭐️"})
                 
             # [전략 3] 거대 세력 딥(Deep) 매집
-            if (last['Close'] < last['MA120']) and (last['MFI'] <= 25) and (last['K'] > last['D']):
+            if (last['Close'] < last['MA120']) and (last['MFI'] <= 25) and (change_pct > 0):
                 accum.append({**base_info, "타점": "패닉셀 후 V자 매집", "승률기대": "⭐️⭐️⭐️"})
                 
-        except Exception as e: 
-            continue
+        except Exception as e: continue
             
-    return swing, momentum, accum, reversal
+    return vcp_swing, momentum, accum, reversal
 
 # ==========================================
-# 6. 메인 렌더링 파트
+# 8. 메인 렌더링 파트
 # ==========================================
 col_main, col_side = st.columns([7, 3])
 
 if 'scanned' not in st.session_state:
     st.session_state.scanned = False
-    st.session_state.swing = []
+    st.session_state.vcp_swing = []
 
 with col_main:
-    if st.button("🚀 월가 주도주 100선 + 레버리지 정밀 스캔", use_container_width=True):
-        with st.spinner("주도주 데이터 다운로드 및 퀀트 지표 교차 검증 중... (약 10~15초 소요)"):
-            swing, momentum, accum, reversal = analyze_practical_signals()
-            st.session_state.swing = swing
+    st.markdown("### ⚡ 월가 기관급 VCP(변동성 축소) 기반 정밀 스캔")
+    if st.button("🚀 매크로 방어막 가동 및 전 종목 정밀 스캔", use_container_width=True):
+        with st.spinner("거시경제(VIX, TLT) 연동 및 VCP(변동성 축소) 패턴 교차 검증 중... (약 15초 소요)"):
+            current_vix = macro_data['^VIX']['price'] if macro_data else 20.0
+            vcp_swing, momentum, accum, reversal = analyze_practical_signals(current_vix)
+            st.session_state.vcp_swing = vcp_swing
             st.session_state.scanned = True
             
-            if swing:
-                top3_to_save = pd.DataFrame(swing).sort_values("변동%", ascending=False).head(3).to_dict('records')
+            if vcp_swing:
+                top3_to_save = pd.DataFrame(vcp_swing).sort_values("변동%", ascending=False).head(3).to_dict('records')
                 save_history(top3_to_save)
 
             c1, c2, c3, c4 = st.columns(4)
-            c1.markdown(f"<div class='metric-box'><div class='metric-title'>📈 20일선 스윙</div><div class='metric-value text-blue'>{len(swing)}건</div></div>", unsafe_allow_html=True)
-            c2.markdown(f"<div class='metric-box'><div class='metric-title'>🚀 모멘텀 돌파</div><div class='metric-value text-red'>{len(momentum)}건</div></div>", unsafe_allow_html=True)
+            c1.markdown(f"<div class='metric-box'><div class='metric-title'>👑 VCP 압축 스윙</div><div class='metric-value text-blue'>{len(vcp_swing)}건</div></div>", unsafe_allow_html=True)
+            c2.markdown(f"<div class='metric-box'><div class='metric-title'>🚀 기관 돌파</div><div class='metric-value text-red'>{len(momentum)}건</div></div>", unsafe_allow_html=True)
             c3.markdown(f"<div class='metric-box'><div class='metric-title'>🐳 세력 딥 매집</div><div class='metric-value text-yellow'>{len(accum)}건</div></div>", unsafe_allow_html=True)
-            c4.markdown(f"<div class='metric-box'><div class='metric-title'>🔄 추세 전환</div><div class='metric-value text-green'>{len(reversal)}건</div></div>", unsafe_allow_html=True)
+            c4.markdown(f"<div class='metric-box'><div class='metric-title'>🛡️ VIX 지수 (방어막)</div><div class='metric-value text-green'>{current_vix:.2f}</div></div>", unsafe_allow_html=True)
             
             st.write("")
-            tab1, tab2, tab3, tab4 = st.tabs(["📈 안전 스윙 (추천)", "🚀 급등주 돌파", "🐳 스마트머니 매집", "🔄 추세전환 시그널"])
+            tab1, tab2, tab3 = st.tabs(["👑 VCP 스마트 스윙 (최우선 타점)", "🚀 모멘텀 급등주", "🐳 스마트머니 매집"])
             
             def display_data(data, msg):
                 if data:
@@ -261,13 +266,12 @@ with col_main:
                     st.dataframe(df, use_container_width=True)
                 else: st.info(msg)
 
-            with tab1: display_data(swing, "스윙 타점이 없습니다.")
+            with tab1: display_data(vcp_swing, "현재 거시경제 불안정 또는 VCP 압축 타점이 없습니다. (현금 관망 권장)")
             with tab2: display_data(momentum, "신고가 돌파 종목이 없습니다.")
             with tab3: display_data(accum, "매집 종목이 없습니다.")
-            with tab4: display_data(reversal, "생명선을 돌파한 종목이 없습니다.")
 
 # ==========================================
-# 7. 우측 사이드바 (과거 수익률 검증 & 뉴스)
+# 9. 우측 사이드바 (과거 수익률 검증 & 뉴스)
 # ==========================================
 with col_side:
     st.markdown("### 🕵️‍♂️ 직전 추천종목 자동 검증")
@@ -281,7 +285,6 @@ with col_side:
             try:
                 curr_price = yf.Ticker(ticker).history(period="1d")['Close'].iloc[-1]
                 profit_pct = ((curr_price - old_price) / old_price) * 100
-                
                 card_class = "history-card-up" if profit_pct > 0 else "history-card-down"
                 arrow = "🔥" if profit_pct > 0 else "❄️"
                 color = "#EF4444" if profit_pct > 0 else "#3B82F6"
@@ -297,48 +300,31 @@ with col_side:
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
-            except:
-                st.write(f"{ticker}: 실시간 데이터를 불러올 수 없습니다.")
-    else:
-        st.info("아직 저장된 과거 추천 기록이 없습니다. 스캔을 돌려주세요.")
+            except: st.write(f"{ticker}: 실시간 데이터 로딩 불가")
+    else: st.info("과거 추천 기록이 없습니다. 스캔을 돌려주세요.")
 
     st.markdown("<br>", unsafe_allow_html=True)
-    
-    st.markdown("### 🏆 신규 스윙 원픽 TOP 3")
-    if st.session_state.scanned and st.session_state.swing:
-        df_top = pd.DataFrame(st.session_state.swing).sort_values("변동%", ascending=False).head(3)
+    st.markdown("### 🏆 VCP 스윙 원픽 TOP 3")
+    if st.session_state.scanned and st.session_state.vcp_swing:
+        df_top = pd.DataFrame(st.session_state.vcp_swing).sort_values("변동%", ascending=False).head(3)
         for idx, row in df_top.iterrows():
             st.markdown(f"""
             <div class='top-pick-card'>
-                <div class='top-pick-ticker'>🎯 {row['티커']}</div>
+                <div class='top-pick-ticker'>👑 {row['티커']}</div>
                 <div class='top-pick-price'>{row['현재가']} <span style='font-size:13px; color:#A1A1AA;'>({row['당일 등락률']})</span></div>
             </div>
             """, unsafe_allow_html=True)
-    else:
-        st.markdown("<div style='color:#64748B; font-size:14px; margin-bottom:20px;'>스캔을 완료하면 오늘의 추천 종목이 뜹니다.</div>", unsafe_allow_html=True)
+    else: st.markdown("<div style='color:#64748B; font-size:14px; margin-bottom:20px;'>스캔을 완료하면 오늘의 추천 종목이 뜹니다.</div>", unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
-    
-    news_tab1, news_tab2, news_tab3 = st.tabs(["🌐 전체 시장 뉴스", "🚨 특징주 속보", "📊 시황 분석"])
-    
+    news_tab1, news_tab2, news_tab3 = st.tabs(["🌐 전체 시장 뉴스", "🚨 특징주 속보", "📊 매크로/PCE 지표 분석"])
     def render_clickable_news(keyword):
         news_list = get_live_clickable_news(keyword)
         if news_list:
             for n in news_list:
-                st.markdown(f"""
-                <a href="{n['link']}" target="_blank">
-                    <div class='news-box'>
-                        <div class='news-title'>⚡ {n['title']}</div>
-                        <div class='news-meta'>
-                            <span>{n['source']}</span>
-                            <span style="color:#F59E0B;">{n['time']}</span>
-                        </div>
-                    </div>
-                </a>
-                """, unsafe_allow_html=True)
-        else:
-            st.write("새로운 뉴스를 수집 중입니다.")
+                st.markdown(f"""<a href="{n['link']}" target="_blank"><div class='news-box'><div class='news-title'>⚡ {n['title']}</div><div class='news-meta'><span>{n['source']}</span><span style="color:#F59E0B;">{n['time']}</span></div></div></a>""", unsafe_allow_html=True)
+        else: st.write("새로운 뉴스를 수집 중입니다.")
 
     with news_tab1: render_clickable_news("미국증시 OR 뉴욕증시 OR 연준")
     with news_tab2: render_clickable_news("나스닥 속보 OR 테슬라 OR 반도체")
-    with news_tab3: render_clickable_news("월가 전망 OR 특징주 분석")
+    with news_tab3: render_clickable_news("미국 PCE 물가지수 OR 금리 인하 전망")
