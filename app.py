@@ -35,21 +35,20 @@ if not st.session_state.authenticated:
     st.stop() 
 
 # ==========================================
-# 3. CSS 스타일링 (무한 루프 전광판 완벽 수리)
+# 3. CSS 스타일링 (전광판 애니메이션 최적화)
 # ==========================================
 st.markdown("""
 <style>
     .stApp { background-color: #0F111A; color: #FFFFFF; font-family: 'Pretendard', sans-serif; }
     
-    /* 완벽하게 이어진 무한 루프 전광판 (Seamless Marquee) */
     .ticker-wrap { width: 100%; overflow: hidden; background-color: #1A1D27; border-bottom: 2px solid #2D3243; padding: 12px 0; margin-bottom: 20px; display: flex; box-sizing: border-box; }
     .ticker-move { display: flex; white-space: nowrap; animation: ticker 40s linear infinite; }
     .ticker-move:hover { animation-play-state: paused; }
     @keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
     .ticker-item { padding: 0 40px; font-size: 15px; font-weight: 600; color: #FFFFFF; flex-shrink: 0; }
     
-    .ticker-up { color: #EF4444; } /* 상승 빨강 */
-    .ticker-down { color: #3B82F6; } /* 하락 파랑 */
+    .ticker-up { color: #EF4444; }
+    .ticker-down { color: #3B82F6; }
     .ticker-name { color: #8A94A6; font-size: 13px; margin-right: 8px; }
     
     .metric-box { background-color: #1A1D27; padding: 15px; border-radius: 10px; text-align: center; border: 1px solid #2D3243; }
@@ -66,15 +65,16 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 4. 상단 실시간 무빙 티커 데이터 연동
+# 4. 실시간 무빙 티커 (1분 단위 초정밀 캐싱으로 오차 최소화)
 # ==========================================
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=60) # 🔥 5분에서 1분으로 단축 (실시간 성 강화)
 def get_ticker_data():
     ticker_symbols = {
         '나스닥': '^IXIC', 'S&P 500': '^GSPC', '다우존스': '^DJI', '필라델피아 반도체': '^SOX', 
         'VIX 공포지수': '^VIX', '달러 환율': 'KRW=X', '코스피': '^KS11', '비트코인': 'BTC-USD', '금': 'GC=F'
     }
     try:
+        # 최근 5일치 데이터를 가져오되, 마지막 줄이 가장 실시간에 가까움
         data = yf.download(list(ticker_symbols.values()), period="5d", progress=False)['Close'].ffill().dropna()
         items_html = ""
         for name, symbol in ticker_symbols.items():
@@ -91,18 +91,17 @@ def get_ticker_data():
             
             items_html += f"<div class='ticker-item'><span class='ticker-name'>{name}</span> {val_str} <span class='{color_class}'>({sign}{pct:.2f}%)</span></div>"
         
-        # 무한 루프를 위해 아이템 리스트를 2번 반복하여 이어붙임
         html_str = f"<div class='ticker-wrap'><div class='ticker-move'>{items_html}{items_html}</div></div>"
         return html_str
     except: return "<div class='ticker-wrap'><div class='ticker-move'>실시간 지수 데이터를 불러오는 중입니다...</div></div>"
 
 st.markdown(get_ticker_data(), unsafe_allow_html=True)
 
-st.title("🎯 남현석의 실전 퀀트 터미널 (WallStreet v10.4)")
-st.markdown("🏆 월가 0.01% 마크 미너비니(Minervini) 궁극의 트렌드 템플릿 완벽 이식")
+st.title("🎯 남현석의 실전 퀀트 터미널 (WallStreet v10.5)")
+st.markdown("🏆 미너비니 트렌드 템플릿 + 시장 주도력(RS) 절대강자 정밀 포착 엔진")
 
 # ==========================================
-# 5. 직전 추천 종목 수익률 검증 파일 시스템
+# 5. 직전 추천 종목 수익률 검증 
 # ==========================================
 HISTORY_FILE = "quant_history.json"
 def load_history():
@@ -143,10 +142,10 @@ def get_live_clickable_news(keyword):
     except: return []
 
 # ==========================================
-# 7. 궁극의 퀀트 엔진: 미너비니 트렌드 템플릿 하드코딩
+# 7. 궁극의 퀀트 엔진: 미너비니 템플릿 + 상대강도(RS) 점수
 # ==========================================
 BULL_STOCKS = [
-    "QLD", "SSO", "USD", "NVDL", # 안전한 최대 2x 레버리지
+    "QLD", "SSO", "USD", "NVDL",
     "AAPL", "MSFT", "NVDA", "GOOGL", "AMZN", "META", "TSLA",
     "AVGO", "TSM", "AMD", "QCOM", "ASML", "AMAT", "MU", "LRCX", "INTC", "ARM", "SMCI", "SIMO", "WDC", "TXN", "NXPI",
     "CRM", "ADBE", "NFLX", "CSCO", "ORCL", "NOW", "INTU", "UBER", "SNOW", "PLTR", "CRWD", "PANW", "FTNT", "DDOG", "NET", "MDB", "TEAM", "WDAY",
@@ -155,34 +154,36 @@ BULL_STOCKS = [
 BEAR_ETFS = ["SH", "PSQ", "QID", "DXD"]
 
 def analyze_practical_signals():
-    # 200일선과 52주 고점/저점을 정확히 구하기 위해 2년(2y)치 데이터 수집
-    data = yf.download(BULL_STOCKS + BEAR_ETFS, period="2y", group_by='ticker', progress=False)
+    # RS(상대강도) 비교를 위해 S&P 500(^GSPC) 데이터 필수 수집
+    data = yf.download(BULL_STOCKS + BEAR_ETFS + ['^GSPC'], period="2y", group_by='ticker', progress=False)
     signature_swing, bear_defense, momentum = [], [], []
     
+    # S&P 500의 최근 6개월(120일) 수익률 계산 (RS 점수 기준점)
+    try:
+        spy_df = data['^GSPC'].dropna()
+        spy_return_6m = (spy_df['Close'].iloc[-1] - spy_df['Close'].iloc[-120]) / spy_df['Close'].iloc[-120]
+    except:
+        spy_return_6m = 0.05
+
     for ticker in BULL_STOCKS + BEAR_ETFS:
         try:
             df = data[ticker].dropna()
-            # 1년(약 250일) 이상의 데이터가 필수
             if len(df) < 255: continue
             
-            # 이평선 세팅
             df['MA20'] = df['Close'].rolling(window=20).mean()
             df['MA50'] = df['Close'].rolling(window=50).mean()
             df['MA150'] = df['Close'].rolling(window=150).mean()
             df['MA200'] = df['Close'].rolling(window=200).mean()
             
-            # 52주(250 거래일) 신고가 및 신저가
             df['High52'] = df['High'].rolling(window=250).max()
             df['Low52'] = df['Low'].rolling(window=250).min()
             
-            # ATR (손절선)
             high_low = df['High'] - df['Low']
             high_close = np.abs(df['High'] - df['Close'].shift())
             low_close = np.abs(df['Low'] - df['Close'].shift())
             true_range = np.max(pd.concat([high_low, high_close, low_close], axis=1), axis=1)
             df['ATR'] = true_range.rolling(14).mean()
             
-            # 스토캐스틱 (타점용)
             delta = df['Close'].diff()
             ema_up = delta.clip(lower=0).ewm(com=13, adjust=False).mean()
             ema_down = (-1 * delta.clip(upper=0)).ewm(com=13, adjust=False).mean()
@@ -201,46 +202,43 @@ def analyze_practical_signals():
             vol_ratio = float(last['Volume'] / last['Vol_20MA'])
             atr_stop_loss = float(last['Close'] - (last['ATR'] * 2))
             
+            # 🔥 상대강도 (RS) 점수 계산: 종목의 6개월 수익률 vs S&P500 6개월 수익률
+            stock_return_6m = (last['Close'] - df['Close'].iloc[-120]) / df['Close'].iloc[-120]
+            rs_rating = "압도적 대장주" if stock_return_6m > (spy_return_6m * 2) else "시장 상회" if stock_return_6m > spy_return_6m else "시장 하회"
+            
             base_info = {
                 "티커": ticker, 
                 "현재가": f"${float(last['Close']):.2f}", 
                 "ATR 스마트손절": f"${atr_stop_loss:.2f}",
                 "당일 등락률": change_str, 
+                "시장 주도력(RS)": rs_rating, # 🔥 신규 무기 장착
                 "변동%": change_pct,
                 "원가": float(last['Close'])
             }
             
-            # ==========================================================
-            # 👑 전설의 마크 미너비니(Mark Minervini) 트렌드 템플릿 필터
-            # UPST 같은 짭짤이 반등, 지하실 차트를 수학적으로 완벽히 소각합니다.
-            # ==========================================================
             if ticker in BULL_STOCKS:
+                # 미너비니 템플릿 필터
                 cond1 = last['Close'] > last['MA150'] and last['Close'] > last['MA200']
                 cond2 = last['MA150'] > last['MA200']
-                # 핵심: 200일선이 최소 한달(20일) 전보다 무조건 상승 중이어야 함 (하락추세 원천차단)
                 cond3 = last['MA200'] > df['MA200'].iloc[-20] 
                 cond4 = last['MA50'] > last['MA150'] and last['MA50'] > last['MA200']
                 cond5 = last['Close'] > last['MA50']
-                cond6 = last['Close'] >= last['Low52'] * 1.30 # 신저가 대비 30% 이상 상승한 놈만
-                cond7 = last['Close'] >= last['High52'] * 0.75 # 신고가 대비 25% 이내에 있는 주도주만
+                cond6 = last['Close'] >= last['Low52'] * 1.30 
+                cond7 = last['Close'] >= last['High52'] * 0.75 
                 
                 is_ultimate_uptrend = cond1 and cond2 and cond3 and cond4 and cond5 and cond6 and cond7
                 
-                # 주군의 시그니처 20일선 눌림 타점
+                # 타점 조건
                 is_near_ma20 = (last['MA20'] * 0.98 <= last['Close'] <= last['MA20'] * 1.05)
                 is_stoch_cool = last['K'] < 40
                 is_vol_low = vol_ratio < 1.0 
                 
                 if is_ultimate_uptrend and is_near_ma20 and is_stoch_cool and is_vol_low and (change_pct > 0):
-                    signature_swing.append({**base_info, "타점": "👑 미너비니 VCP 수축 반등", "승률기대": "S++ 급"})
+                    signature_swing.append({**base_info, "타점": "👑 미너비니 20일선 눌림", "승률기대": "S++ 급"})
                     
-                # 돌파 매매
                 if is_ultimate_uptrend and (last['Close'] > df['High'].rolling(20).max().iloc[-2]) and (vol_ratio >= 1.5) and (change_pct >= 2.0):
                     momentum.append({**base_info, "타점": "주도주 거래량 폭발 돌파", "승률기대": "⭐️⭐️⭐️⭐️"})
 
-            # ==========================================================
-            # 🚨 하락장 방어 인버스 타점
-            # ==========================================================
             if ticker in BEAR_ETFS:
                 if (last['Close'] > last['MA20']) and (last['MA20'] > prev['MA20']) and (change_pct > 1.0):
                     bear_defense.append({**base_info, "타점": "🚨 하락장 진입: 인버스 돌파", "승률기대": "방어용"})
@@ -261,7 +259,7 @@ if 'scanned' not in st.session_state:
 with col_main:
     st.markdown("### ⚡ All-Weather: 궁극의 주도주 스윙 및 하락장 방어 스캔")
     if st.button("🚀 월가 0.01% 궁극의 정밀 스캔 가동", use_container_width=True):
-        with st.spinner("2년 치 데이터 분석 및 미너비니 템플릿(역배열 차단) 가동 중... (약 20초 소요)"):
+        with st.spinner("상대강도(RS) 점수 계산 및 미너비니 템플릿 가동 중... (약 20초 소요)"):
             signature_swing, bear_defense, momentum = analyze_practical_signals()
             st.session_state.signature_swing = signature_swing
             st.session_state.scanned = True
@@ -284,8 +282,8 @@ with col_main:
                     st.dataframe(df, use_container_width=True)
                 else: st.info(msg)
 
-            with tab1: display_data(signature_swing, "현재 미너비니 템플릿(완벽 우상향)을 통과한 종목 중 20일선 눌림목 자리가 없습니다. (현금 관망)")
-            with tab2: display_data(bear_defense, "현재 시장은 상승/횡보장이며, 뚜렷한 하락(인버스) 타점이 없습니다.")
+            with tab1: display_data(signature_swing, "현재 미너비니 템플릿을 통과한 종목 중 20일선 눌림목 자리가 없습니다. (현금 관망)")
+            with tab2: display_data(bear_defense, "현재 시장은 상승장이며, 뚜렷한 하락(인버스) 타점이 없습니다.")
             with tab3: display_data(momentum, "신고가 돌파 종목이 없습니다.")
 
 # ==========================================
