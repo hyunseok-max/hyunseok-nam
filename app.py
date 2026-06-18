@@ -12,7 +12,7 @@ import numpy as np
 # ==========================================
 # 1. 터미널 UI 세팅
 # ==========================================
-st.set_page_config(page_title="남현석의 월가 퀀트 터미널", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="남현석과함께 100억만들기 ", layout="wide", initial_sidebar_state="collapsed")
 
 # ==========================================
 # 🔒 2. 통제실 보안 구역
