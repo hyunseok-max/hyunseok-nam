@@ -60,8 +60,8 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-st.title("🎯 남현석의 실전 퀀트 터미널 (WallStreet v10.0)")
-st.markdown("월가 최상위 퀀트 펀드 매크로 오버레이 및 변동성 축소(VCP) 타점 엔진 장착")
+st.title("🎯 남현석의 실전 퀀트 터미널 (WallStreet v10.1)")
+st.markdown("단기 스윙(3~7일) 최적화: 완벽한 정배열(우상향) VCP 압축 타점만 포착")
 
 # ==========================================
 # 4. 직전 추천 종목 수익률 검증 파일 시스템
@@ -78,13 +78,12 @@ def save_history(top3_data):
     with open(HISTORY_FILE, "w", encoding="utf-8") as f: json.dump(save_data, f, ensure_ascii=False, indent=4)
 
 # ==========================================
-# 5. 시장 거시경제(매크로) 전광판 (VIX 오류 완벽 수정)
+# 5. 시장 거시경제(매크로) 전광판
 # ==========================================
 @st.cache_data(ttl=300)
 def get_macro_data():
     try:
         tickers = ['^IXIC', '^GSPC', '^VIX', 'TLT']
-        # ffill() 과 dropna()를 통해 NaN 결측치 버그 완벽 제거
         data = yf.download(tickers, period="5d", progress=False)['Close'].ffill().dropna()
         macro = {}
         for t in tickers:
@@ -144,7 +143,7 @@ def get_live_clickable_news(keyword):
     except: return []
 
 # ==========================================
-# 7. 최상위 퀀트 엔진: VCP + 매크로 필터 + ATR 손절가
+# 7. 최상위 퀀트 엔진: 완벽한 정배열 + VCP 필터 + ATR 손절
 # ==========================================
 TARGET_STOCKS = [
     "SPY", "QQQ", "DIA", "IWM", "SOXX", "TQQQ", "SOXL", "NVDL", "TECL", "FNGU", "BULZ",
@@ -158,22 +157,22 @@ TARGET_STOCKS = [
 ]
 
 def analyze_practical_signals(vix_level):
-    data = yf.download(TARGET_STOCKS, period="6mo", group_by='ticker', progress=False)
+    # MA120을 정확히 구하기 위해 데이터 수집 기간을 1y(1년)으로 확장
+    data = yf.download(TARGET_STOCKS, period="1y", group_by='ticker', progress=False)
     vcp_swing, momentum, accum, reversal = [], [], [], []
     
     for ticker in TARGET_STOCKS:
         try:
             df = data[ticker].dropna()
-            if len(df) < 60: continue
+            # 120일 이평선을 계산해야 하므로 최소 130일치 데이터가 없는 신규 상장주는 과감히 제외
+            if len(df) < 130: continue
             
-            # 기본 이평선 및 볼린저 밴드 (VCP 변동성 축소 확인용)
             df['MA20'] = df['Close'].rolling(window=20).mean()
             df['MA50'] = df['Close'].rolling(window=50).mean()
             df['MA120'] = df['Close'].rolling(window=120).mean()
             df['BB_std'] = df['Close'].rolling(window=20).std()
-            df['BB_Width'] = (df['BB_std'] * 4) / df['MA20'] # 밴드폭
+            df['BB_Width'] = (df['BB_std'] * 4) / df['MA20']
             
-            # ATR (Average True Range) - 기관급 지능형 손절선 계산용
             high_low = df['High'] - df['Low']
             high_close = np.abs(df['High'] - df['Close'].shift())
             low_close = np.abs(df['Low'] - df['Close'].shift())
@@ -181,7 +180,6 @@ def analyze_practical_signals(vix_level):
             true_range = np.max(ranges, axis=1)
             df['ATR'] = true_range.rolling(14).mean()
             
-            # 거래량 및 수급 지표 (MFI)
             df['Vol_20MA'] = df['Volume'].rolling(window=20).mean()
             typical_price = (df['High'] + df['Low'] + df['Close']) / 3
             raw_money_flow = typical_price * df['Volume']
@@ -198,7 +196,6 @@ def analyze_practical_signals(vix_level):
             change_str = f"🔥 +{change_pct:.2f}%" if change_pct > 0 else f"❄️ {change_pct:.2f}%"
             vol_ratio = float(last['Volume'] / last['Vol_20MA'])
             
-            # 프로 퀀트 트레이더들의 2x ATR 추적 손절선
             atr_stop_loss = float(last['Close'] - (last['ATR'] * 2))
             
             base_info = {
@@ -210,18 +207,23 @@ def analyze_practical_signals(vix_level):
                 "원가": float(last['Close'])
             }
             
-            # [전략 1] 최상위 VCP(변동성 축소) + 20일선 지지 + 거시경제 안전
-            # 매크로 방어막: VIX가 25 이상이면 투기적 스윙 타점 전면 차단
-            is_vcp_tight = last['BB_Width'] < df['BB_Width'].rolling(20).mean().iloc[-1] # 밴드폭이 20일 평균보다 좁아짐(에너지 응축)
-            is_near_ma20 = (last['MA20'] * 0.99 <= last['Close'] <= last['MA20'] * 1.03)
-            if (vix_level < 25.0) and is_near_ma20 and is_vcp_tight and (change_pct > 0) and (last['MFI'] > prev['MFI']):
-                vcp_swing.append({**base_info, "타점": "VCP 폭풍전야 눌림목", "승률기대": "👑 S+ 급"})
+            # 🔥 핵심 패치: 완벽한 정배열(우상향) 상태인 주도주만 걸러내는 'Stage 2' 필터
+            # 20일선 > 50일선 > 120일선 위에 주가가 위치해야 함. (어도비, 나이키 같은 하락 차트 원천 차단)
+            is_uptrend = (last['Close'] > last['MA20']) and (last['MA20'] > last['MA50']) and (last['MA50'] > last['MA120'])
+            
+            # [전략 1] 우상향 주도주 + VCP(변동성 축소) + 20일선 지지
+            is_vcp_tight = last['BB_Width'] < df['BB_Width'].rolling(20).mean().iloc[-1]
+            is_near_ma20 = (last['MA20'] * 0.99 <= last['Close'] <= last['MA20'] * 1.05)
+            
+            # 하락장이 아닌 완벽한 우상향 종목에서만 VCP 스윙 타점을 잡음
+            if (vix_level < 25.0) and is_uptrend and is_near_ma20 and is_vcp_tight and (last['MFI'] > prev['MFI']):
+                vcp_swing.append({**base_info, "타점": "주도주 VCP 완벽 눌림목", "승률기대": "👑 S+ 급"})
                 
-            # [전략 2] 기관 대량 수급 돌파 (모멘텀)
-            if (last['Close'] > df['High'].rolling(20).max().iloc[-2]) and (vol_ratio >= 2.0) and (change_pct >= 3.0):
-                momentum.append({**base_info, "타점": "기관 대량거래 돌파", "승률기대": "⭐️⭐️⭐️⭐️"})
+            # [전략 2] 기관 대량 수급 돌파 (역시 정배열 주도주에서만)
+            if is_uptrend and (last['Close'] > df['High'].rolling(20).max().iloc[-2]) and (vol_ratio >= 2.0) and (change_pct >= 3.0):
+                momentum.append({**base_info, "타점": "주도주 기관 대량 돌파", "승률기대": "⭐️⭐️⭐️⭐️"})
                 
-            # [전략 3] 거대 세력 딥(Deep) 매집
+            # [전략 3] 거대 세력 딥(Deep) 매집 (이것만 낙폭과대 역발상 매매)
             if (last['Close'] < last['MA120']) and (last['MFI'] <= 25) and (change_pct > 0):
                 accum.append({**base_info, "타점": "패닉셀 후 V자 매집", "승률기대": "⭐️⭐️⭐️"})
                 
@@ -239,9 +241,9 @@ if 'scanned' not in st.session_state:
     st.session_state.vcp_swing = []
 
 with col_main:
-    st.markdown("### ⚡ 월가 기관급 VCP(변동성 축소) 기반 정밀 스캔")
+    st.markdown("### ⚡ 월가 기관급 VCP(변동성 축소) + 주도주 정배열 정밀 스캔")
     if st.button("🚀 매크로 방어막 가동 및 전 종목 정밀 스캔", use_container_width=True):
-        with st.spinner("거시경제(VIX, TLT) 연동 및 VCP(변동성 축소) 패턴 교차 검증 중... (약 15초 소요)"):
+        with st.spinner("과거 1년치 데이터 다운로드 및 우상향(Stage 2) 필터링 중... (약 15~20초 소요)"):
             current_vix = macro_data['^VIX']['price'] if macro_data else 20.0
             vcp_swing, momentum, accum, reversal = analyze_practical_signals(current_vix)
             st.session_state.vcp_swing = vcp_swing
@@ -252,13 +254,13 @@ with col_main:
                 save_history(top3_to_save)
 
             c1, c2, c3, c4 = st.columns(4)
-            c1.markdown(f"<div class='metric-box'><div class='metric-title'>👑 VCP 압축 스윙</div><div class='metric-value text-blue'>{len(vcp_swing)}건</div></div>", unsafe_allow_html=True)
-            c2.markdown(f"<div class='metric-box'><div class='metric-title'>🚀 기관 돌파</div><div class='metric-value text-red'>{len(momentum)}건</div></div>", unsafe_allow_html=True)
+            c1.markdown(f"<div class='metric-box'><div class='metric-title'>👑 주도주 압축 스윙</div><div class='metric-value text-blue'>{len(vcp_swing)}건</div></div>", unsafe_allow_html=True)
+            c2.markdown(f"<div class='metric-box'><div class='metric-title'>🚀 우상향 돌파</div><div class='metric-value text-red'>{len(momentum)}건</div></div>", unsafe_allow_html=True)
             c3.markdown(f"<div class='metric-box'><div class='metric-title'>🐳 세력 딥 매집</div><div class='metric-value text-yellow'>{len(accum)}건</div></div>", unsafe_allow_html=True)
             c4.markdown(f"<div class='metric-box'><div class='metric-title'>🛡️ VIX 지수 (방어막)</div><div class='metric-value text-green'>{current_vix:.2f}</div></div>", unsafe_allow_html=True)
             
             st.write("")
-            tab1, tab2, tab3 = st.tabs(["👑 VCP 스마트 스윙 (최우선 타점)", "🚀 모멘텀 급등주", "🐳 스마트머니 매집"])
+            tab1, tab2, tab3 = st.tabs(["👑 주도주 VCP 스윙 (최우선 타점)", "🚀 우상향 돌파", "🐳 스마트머니 매집"])
             
             def display_data(data, msg):
                 if data:
@@ -266,8 +268,8 @@ with col_main:
                     st.dataframe(df, use_container_width=True)
                 else: st.info(msg)
 
-            with tab1: display_data(vcp_swing, "현재 거시경제 불안정 또는 VCP 압축 타점이 없습니다. (현금 관망 권장)")
-            with tab2: display_data(momentum, "신고가 돌파 종목이 없습니다.")
+            with tab1: display_data(vcp_swing, "현재 완벽한 우상향 상태에서 VCP로 압축된 주도주가 없습니다. (현금 관망 권장)")
+            with tab2: display_data(momentum, "우상향 돌파 종목이 없습니다.")
             with tab3: display_data(accum, "매집 종목이 없습니다.")
 
 # ==========================================
@@ -304,7 +306,7 @@ with col_side:
     else: st.info("과거 추천 기록이 없습니다. 스캔을 돌려주세요.")
 
     st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown("### 🏆 VCP 스윙 원픽 TOP 3")
+    st.markdown("### 🏆 주도주 스윙 원픽 TOP 3")
     if st.session_state.scanned and st.session_state.vcp_swing:
         df_top = pd.DataFrame(st.session_state.vcp_swing).sort_values("변동%", ascending=False).head(3)
         for idx, row in df_top.iterrows():
