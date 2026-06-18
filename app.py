@@ -10,9 +10,9 @@ import os
 import numpy as np
 
 # ==========================================
-# 1. 터미널 UI 세팅
+# 1. 100억 전황판 VIP UI 세팅
 # ==========================================
-st.set_page_config(page_title="남현석과함께 100억만들기 ", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="남현석과 함께 100억 만들기", layout="wide", initial_sidebar_state="expanded")
 
 # ==========================================
 # 🔒 2. 통제실 보안 구역
@@ -24,8 +24,8 @@ if not st.session_state.authenticated:
     st.markdown("<br><br><br><br>", unsafe_allow_html=True)
     col1, col2, col3 = st.columns([1, 1, 1])
     with col2:
-        st.markdown("<h2 style='text-align: center; color: #F59E0B;'>🔒 통제실 보안 구역</h2>", unsafe_allow_html=True)
-        pwd = st.text_input("암호 입력", type="password")
+        st.markdown("<h2 style='text-align: center; color: #F59E0B;'>🔒 100억 작전 통제실</h2>", unsafe_allow_html=True)
+        pwd = st.text_input("마스터 암호 입력", type="password")
         if st.button("진입 (ENTER)", use_container_width=True):
             if pwd == "100억":  
                 st.session_state.authenticated = True
@@ -35,73 +35,68 @@ if not st.session_state.authenticated:
     st.stop() 
 
 # ==========================================
-# 3. CSS 스타일링 (전광판 애니메이션 최적화)
+# 3. 프리미엄 CSS (무한 전광판 & 대시보드)
 # ==========================================
 st.markdown("""
 <style>
-    .stApp { background-color: #0F111A; color: #FFFFFF; font-family: 'Pretendard', sans-serif; }
+    .stApp { background-color: #0B0E14; color: #E2E8F0; font-family: 'Pretendard', sans-serif; }
     
-    .ticker-wrap { width: 100%; overflow: hidden; background-color: #1A1D27; border-bottom: 2px solid #2D3243; padding: 12px 0; margin-bottom: 20px; display: flex; box-sizing: border-box; }
-    .ticker-move { display: flex; white-space: nowrap; animation: ticker 40s linear infinite; }
+    /* 완벽 이음새 무한 전광판 */
+    .ticker-wrap { width: 100%; overflow: hidden; background-color: #151A23; border-bottom: 2px solid #252B3B; padding: 10px 0; margin-bottom: 20px; display: flex; }
+    .ticker-move { display: flex; white-space: nowrap; animation: ticker 35s linear infinite; }
     .ticker-move:hover { animation-play-state: paused; }
     @keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-    .ticker-item { padding: 0 40px; font-size: 15px; font-weight: 600; color: #FFFFFF; flex-shrink: 0; }
+    .ticker-item { padding: 0 40px; font-size: 15px; font-weight: 700; color: #FFFFFF; flex-shrink: 0; }
+    .ticker-up { color: #F87171; } .ticker-down { color: #60A5FA; } .ticker-name { color: #94A3B8; font-size: 13px; margin-right: 8px; }
     
-    .ticker-up { color: #EF4444; }
-    .ticker-down { color: #3B82F6; }
-    .ticker-name { color: #8A94A6; font-size: 13px; margin-right: 8px; }
+    /* 100억 대시보드 카드 */
+    .dashboard-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
+    .dash-card { background: linear-gradient(145deg, #1A1F2B 0%, #11151D 100%); padding: 20px; border-radius: 12px; border: 1px solid #2D3748; box-shadow: 0 4px 6px rgba(0,0,0,0.3); text-align: center; }
+    .dash-title { color: #94A3B8; font-size: 14px; font-weight: bold; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+    .dash-value { font-size: 28px; font-weight: 900; color: #FFFFFF; }
+    .dash-sub { font-size: 12px; color: #64748B; margin-top: 5px; }
     
-    .metric-box { background-color: #1A1D27; padding: 15px; border-radius: 10px; text-align: center; border: 1px solid #2D3243; }
-    .metric-title { color: #8A94A6; font-size: 13px; margin-bottom: 5px; font-weight: bold; }
-    .metric-value { font-size: 24px; font-weight: bold; color: #FFFFFF; }
-    .history-card-up { background-color: rgba(239, 68, 68, 0.1); border: 1px solid #EF4444; padding: 12px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
-    .history-card-down { background-color: rgba(59, 130, 246, 0.1); border: 1px solid #3B82F6; padding: 12px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
-    .news-box { background-color: #1A1D27; padding: 12px 15px; margin-bottom: 10px; border-radius: 8px; border-left: 4px solid #3B82F6; transition: 0.2s; }
-    .news-box:hover { background-color: #24283B; transform: translateX(3px); }
-    .news-title { font-size: 14px; font-weight: bold; color: #F8FAFC; line-height: 1.4; margin-bottom: 6px; }
-    .news-meta { font-size: 11px; color: #8A94A6; display: flex; justify-content: space-between; }
+    .news-box { background-color: #1A1F2B; padding: 15px; margin-bottom: 12px; border-radius: 8px; border-left: 4px solid #F59E0B; transition: 0.2s; }
+    .news-box:hover { background-color: #252B3B; transform: translateX(5px); }
+    .news-title { font-size: 14px; font-weight: bold; color: #F1F5F9; line-height: 1.4; margin-bottom: 8px; }
+    .news-meta { font-size: 11px; color: #94A3B8; display: flex; justify-content: space-between; }
     a { text-decoration: none !important; }
 </style>
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 4. 실시간 무빙 티커 (1분 단위 초정밀 캐싱으로 오차 최소화)
+# 4. 실시간 무빙 티커 (1분 초정밀)
 # ==========================================
-@st.cache_data(ttl=60) # 🔥 5분에서 1분으로 단축 (실시간 성 강화)
+@st.cache_data(ttl=60)
 def get_ticker_data():
     ticker_symbols = {
-        '나스닥': '^IXIC', 'S&P 500': '^GSPC', '다우존스': '^DJI', '필라델피아 반도체': '^SOX', 
-        'VIX 공포지수': '^VIX', '달러 환율': 'KRW=X', '코스피': '^KS11', '비트코인': 'BTC-USD', '금': 'GC=F'
+        '나스닥': '^IXIC', 'S&P 500': '^GSPC', '필라델피아 반도체': '^SOX', 
+        'VIX 공포지수': '^VIX', '달러 환율': 'KRW=X', '코스피': '^KS11', '비트코인': 'BTC-USD', '미 10년물 국채': '^TNX'
     }
     try:
-        # 최근 5일치 데이터를 가져오되, 마지막 줄이 가장 실시간에 가까움
         data = yf.download(list(ticker_symbols.values()), period="5d", progress=False)['Close'].ffill().dropna()
         items_html = ""
         for name, symbol in ticker_symbols.items():
-            last = float(data[symbol].iloc[-1])
-            prev = float(data[symbol].iloc[-2])
-            diff = last - prev
-            pct = (diff / prev) * 100
-            color_class = "ticker-up" if diff > 0 else "ticker-down"
-            sign = "+" if diff > 0 else ""
+            last, prev = float(data[symbol].iloc[-1]), float(data[symbol].iloc[-2])
+            diff, pct = last - prev, ((last - prev) / prev) * 100
+            color, sign = ("ticker-up", "+") if diff > 0 else ("ticker-down", "")
             
-            if name in ['달러 환율', '코스피', 'S&P 500']: val_str = f"{last:,.2f}"
+            if name in ['달러 환율', '코스피', 'S&P 500', '나스닥']: val_str = f"{last:,.2f}"
             elif name == '비트코인': val_str = f"${last:,.0f}"
             else: val_str = f"{last:,.2f}"
-            
-            items_html += f"<div class='ticker-item'><span class='ticker-name'>{name}</span> {val_str} <span class='{color_class}'>({sign}{pct:.2f}%)</span></div>"
+            items_html += f"<div class='ticker-item'><span class='ticker-name'>{name}</span> {val_str} <span class='{color}'>({sign}{pct:.2f}%)</span></div>"
         
-        html_str = f"<div class='ticker-wrap'><div class='ticker-move'>{items_html}{items_html}</div></div>"
-        return html_str
-    except: return "<div class='ticker-wrap'><div class='ticker-move'>실시간 지수 데이터를 불러오는 중입니다...</div></div>"
+        return f"<div class='ticker-wrap'><div class='ticker-move'>{items_html}{items_html}</div></div>"
+    except: return "<div class='ticker-wrap'><div class='ticker-move'>실시간 지수 연결 중...</div></div>"
 
 st.markdown(get_ticker_data(), unsafe_allow_html=True)
 
-st.title("🎯 남현석의 실전 퀀트 터미널 (WallStreet v10.5)")
-st.markdown("🏆 미너비니 트렌드 템플릿 + 시장 주도력(RS) 절대강자 정밀 포착 엔진")
+# 메인 타이틀
+st.markdown("<h1 style='text-align: center; color: #F59E0B; font-weight: 900; margin-bottom: 0;'>👑 남현석과 함께 100억 만들기</h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #94A3B8; margin-bottom: 30px;'>WallStreet v11.0 Ultimate | 헤지펀드 VCP 극압축 필터 & PCE 매크로 방어벽 가동 중</p>", unsafe_allow_html=True)
 
 # ==========================================
-# 5. 직전 추천 종목 수익률 검증 
+# 5. 데이터 저장소 및 뉴스 엔진
 # ==========================================
 HISTORY_FILE = "quant_history.json"
 def load_history():
@@ -109,12 +104,9 @@ def load_history():
         with open(HISTORY_FILE, "r", encoding="utf-8") as f: return json.load(f)
     return None
 def save_history(top3_data):
-    save_data = [{"티커": item['티커'], "추천가": item['원가'], "시간": datetime.now().strftime("%Y-%m-%d %H:%M")} for item in top3_data]
+    save_data = [{"티커": item['티커'], "추천가": item['현재가'], "시간": datetime.now().strftime("%Y-%m-%d %H:%M")} for item in top3_data]
     with open(HISTORY_FILE, "w", encoding="utf-8") as f: json.dump(save_data, f, ensure_ascii=False, indent=4)
 
-# ==========================================
-# 6. 실시간 뉴스 엔진
-# ==========================================
 @st.cache_data(ttl=60)
 def get_live_clickable_news(keyword):
     try:
@@ -124,25 +116,21 @@ def get_live_clickable_news(keyword):
         news_list = []
         now = datetime.now(timezone.utc)
         for item in root.findall('.//item')[:8]:
-            title = item.find('title').text
-            link = item.find('link').text
-            pubDate_str = item.find('pubDate').text
+            title, link, pubDate_str = item.find('title').text, item.find('link').text, item.find('pubDate').text
             source = "글로벌 매체"
             if " - " in title: title, source = title.rsplit(" - ", 1)
             try:
                 pub_tuple = email.utils.parsedate_tz(pubDate_str)
                 pub_time = datetime.fromtimestamp(email.utils.mktime_tz(pub_tuple), timezone.utc)
                 diff_sec = (now - pub_time).total_seconds()
-                if diff_sec < 3600: time_str = f"{int(diff_sec//60)}분 전"
-                elif diff_sec < 86400: time_str = f"{int(diff_sec//3600)}시간 전"
-                else: time_str = "오늘"
+                time_str = f"{int(diff_sec//60)}분 전" if diff_sec < 3600 else f"{int(diff_sec//3600)}시간 전"
             except: time_str = "방금 전"
             news_list.append({"title": title, "link": link, "source": source, "time": time_str})
         return news_list
     except: return []
 
 # ==========================================
-# 7. 궁극의 퀀트 엔진: 미너비니 템플릿 + 상대강도(RS) 점수
+# 6. 헤지펀드 AI 퀀트 엔진 (PCE 방어 & 극압축 VCP)
 # ==========================================
 BULL_STOCKS = [
     "QLD", "SSO", "USD", "NVDL",
@@ -151,182 +139,192 @@ BULL_STOCKS = [
     "CRM", "ADBE", "NFLX", "CSCO", "ORCL", "NOW", "INTU", "UBER", "SNOW", "PLTR", "CRWD", "PANW", "FTNT", "DDOG", "NET", "MDB", "TEAM", "WDAY",
     "V", "MA", "JPM", "BAC", "WFC", "GS", "MS", "AXP", "PYPL", "SQ", "COIN", "MARA", "RIOT", "MSTR", "HOOD", "SOFI", "AFRM", "UPST"
 ]
-BEAR_ETFS = ["SH", "PSQ", "QID", "DXD"]
+BEAR_ETFS = ["SH", "PSQ", "QID"]
 
-def analyze_practical_signals():
-    # RS(상대강도) 비교를 위해 S&P 500(^GSPC) 데이터 필수 수집
-    data = yf.download(BULL_STOCKS + BEAR_ETFS + ['^GSPC'], period="2y", group_by='ticker', progress=False)
-    signature_swing, bear_defense, momentum = [], [], []
+def analyze_hedgefund_signals():
+    data = yf.download(BULL_STOCKS + BEAR_ETFS + ['^GSPC', '^VIX', 'TLT'], period="2y", group_by='ticker', progress=False)
+    vcp_swing, bear_defense, momentum = [], [], []
     
-    # S&P 500의 최근 6개월(120일) 수익률 계산 (RS 점수 기준점)
+    # 🛡️ PCE 매크로 동적 방어벽 계산
     try:
+        vix_df, tlt_df = data['^VIX'].dropna(), data['TLT'].dropna()
+        current_vix = vix_df['Close'].iloc[-1]
+        tlt_trend = tlt_df['Close'].iloc[-1] < tlt_df['Close'].iloc[-20] # 한달 전보다 장기채 하락(금리상승/인플레 우려)
+        # 매크로가 불안하면 VIX 허용치를 25에서 20으로 확 낮춰서 극도로 보수적 스탠스 취함
+        vix_limit = 20.0 if tlt_trend else 25.0 
         spy_df = data['^GSPC'].dropna()
         spy_return_6m = (spy_df['Close'].iloc[-1] - spy_df['Close'].iloc[-120]) / spy_df['Close'].iloc[-120]
     except:
-        spy_return_6m = 0.05
+        current_vix, vix_limit, spy_return_6m = 20.0, 25.0, 0.05
 
     for ticker in BULL_STOCKS + BEAR_ETFS:
         try:
             df = data[ticker].dropna()
             if len(df) < 255: continue
             
+            # 이평선 및 기본 지표
             df['MA20'] = df['Close'].rolling(window=20).mean()
             df['MA50'] = df['Close'].rolling(window=50).mean()
             df['MA150'] = df['Close'].rolling(window=150).mean()
             df['MA200'] = df['Close'].rolling(window=200).mean()
-            
             df['High52'] = df['High'].rolling(window=250).max()
             df['Low52'] = df['Low'].rolling(window=250).min()
             
-            high_low = df['High'] - df['Low']
-            high_close = np.abs(df['High'] - df['Close'].shift())
-            low_close = np.abs(df['Low'] - df['Close'].shift())
-            true_range = np.max(pd.concat([high_low, high_close, low_close], axis=1), axis=1)
-            df['ATR'] = true_range.rolling(14).mean()
+            # ATR (스마트 손절)
+            tr1 = df['High'] - df['Low']
+            tr2 = np.abs(df['High'] - df['Close'].shift())
+            tr3 = np.abs(df['Low'] - df['Close'].shift())
+            df['ATR'] = np.max(pd.concat([tr1, tr2, tr3], axis=1), axis=1).rolling(14).mean()
             
-            delta = df['Close'].diff()
-            ema_up = delta.clip(lower=0).ewm(com=13, adjust=False).mean()
-            ema_down = (-1 * delta.clip(upper=0)).ewm(com=13, adjust=False).mean()
-            df['RSI'] = 100 - (100 / (1 + (ema_up / ema_down)))
-            min_rsi = df['RSI'].rolling(window=14).min()
-            max_rsi = df['RSI'].rolling(window=14).max()
-            df['StochRSI'] = (df['RSI'] - min_rsi) / (max_rsi - min_rsi)
-            df['K'] = df['StochRSI'].rolling(window=3).mean() * 100
+            # 👑 헤지펀드 극압축 VCP 지표 (BB Percentile)
+            df['BB_std'] = df['Close'].rolling(window=20).std()
+            df['BB_Width'] = (df['BB_std'] * 4) / df['MA20']
+            bb_min_120 = df['BB_Width'].rolling(120).min()
+            bb_max_120 = df['BB_Width'].rolling(120).max()
+            df['BB_Percentile'] = (df['BB_Width'] - bb_min_120) / (bb_max_120 - bb_min_120) # 0에 가까울수록 과거 6개월 내 가장 압축됨
             
-            df['Vol_20MA'] = df['Volume'].rolling(window=20).mean()
+            df['Vol_50MA'] = df['Volume'].rolling(window=50).mean()
             
-            last = df.iloc[-1]
-            prev = df.iloc[-2]
-            change_pct = float(((last['Close'] - prev['Close']) / prev['Close']) * 100)
+            last, prev = df.iloc[-1], df.iloc[-2]
+            change_pct = ((last['Close'] - prev['Close']) / prev['Close']) * 100
             change_str = f"🔥 +{change_pct:.2f}%" if change_pct > 0 else f"❄️ {change_pct:.2f}%"
-            vol_ratio = float(last['Volume'] / last['Vol_20MA'])
-            atr_stop_loss = float(last['Close'] - (last['ATR'] * 2))
+            atr_stop_loss = last['Close'] - (last['ATR'] * 2)
             
-            # 🔥 상대강도 (RS) 점수 계산: 종목의 6개월 수익률 vs S&P500 6개월 수익률
+            # RS 주도력 평가
             stock_return_6m = (last['Close'] - df['Close'].iloc[-120]) / df['Close'].iloc[-120]
-            rs_rating = "압도적 대장주" if stock_return_6m > (spy_return_6m * 2) else "시장 상회" if stock_return_6m > spy_return_6m else "시장 하회"
+            rs_score = (stock_return_6m / spy_return_6m) * 100 if spy_return_6m > 0 else 100
+            rs_rating = "👑 S급 대장주" if rs_score > 200 else "A급 주도주" if rs_score > 100 else "B급"
             
             base_info = {
                 "티커": ticker, 
-                "현재가": f"${float(last['Close']):.2f}", 
-                "ATR 스마트손절": f"${atr_stop_loss:.2f}",
-                "당일 등락률": change_str, 
-                "시장 주도력(RS)": rs_rating, # 🔥 신규 무기 장착
-                "변동%": change_pct,
+                "현재가": float(last['Close']), 
+                "손절가(ATR)": float(atr_stop_loss),
+                "당일등락": change_str, 
+                "시장 주도력": rs_rating,
+                "압축률": f"상위 {int((1 - last['BB_Percentile'])*100)}%", # 100%에 가까울수록 좋음
                 "원가": float(last['Close'])
             }
             
             if ticker in BULL_STOCKS:
-                # 미너비니 템플릿 필터
-                cond1 = last['Close'] > last['MA150'] and last['Close'] > last['MA200']
-                cond2 = last['MA150'] > last['MA200']
-                cond3 = last['MA200'] > df['MA200'].iloc[-20] 
-                cond4 = last['MA50'] > last['MA150'] and last['MA50'] > last['MA200']
-                cond5 = last['Close'] > last['MA50']
-                cond6 = last['Close'] >= last['Low52'] * 1.30 
-                cond7 = last['Close'] >= last['High52'] * 0.75 
+                # 1. 미너비니 완벽 우상향 템플릿 (UPST 등 완벽 차단)
+                is_uptrend = (last['Close'] > last['MA150'] and last['MA150'] > last['MA200'] and 
+                              last['MA200'] > df['MA200'].iloc[-20] and last['Close'] > last['MA50'] and
+                              last['Close'] >= last['Low52'] * 1.30 and last['Close'] >= last['High52'] * 0.75)
                 
-                is_ultimate_uptrend = cond1 and cond2 and cond3 and cond4 and cond5 and cond6 and cond7
-                
-                # 타점 조건
+                # 2. 헤지펀드 변형 VCP (극압축 + 거래량 마름)
+                is_vcp_extreme = last['BB_Percentile'] < 0.25 # 최근 6개월 내 밴드폭 하위 25% 이내로 질식 상태
+                is_vol_dry = df['Volume'].iloc[-3:].mean() < (last['Vol_50MA'] * 0.8) # 3일 평균 거래량이 50일 평균의 80% 미만
                 is_near_ma20 = (last['MA20'] * 0.98 <= last['Close'] <= last['MA20'] * 1.05)
-                is_stoch_cool = last['K'] < 40
-                is_vol_low = vol_ratio < 1.0 
                 
-                if is_ultimate_uptrend and is_near_ma20 and is_stoch_cool and is_vol_low and (change_pct > 0):
-                    signature_swing.append({**base_info, "타점": "👑 미너비니 20일선 눌림", "승률기대": "S++ 급"})
+                # 매크로 방어벽(vix_limit) 작동 하에서만 진입
+                if (current_vix < vix_limit) and is_uptrend and is_near_ma20 and is_vcp_extreme and is_vol_dry and (change_pct > 0):
+                    vcp_swing.append({**base_info, "타점": "👑 극압축 VCP 눌림목"})
                     
-                if is_ultimate_uptrend and (last['Close'] > df['High'].rolling(20).max().iloc[-2]) and (vol_ratio >= 1.5) and (change_pct >= 2.0):
-                    momentum.append({**base_info, "타점": "주도주 거래량 폭발 돌파", "승률기대": "⭐️⭐️⭐️⭐️"})
+                # 포켓 피봇 (Pocket Pivot) 돌파 매매
+                is_pocket_pivot = (last['Volume'] > df['Volume'].rolling(10).max().iloc[-2]) and (change_pct >= 2.0)
+                if is_uptrend and is_pocket_pivot and (last['Close'] > df['High'].rolling(20).max().iloc[-2]):
+                    momentum.append({**base_info, "타점": "🚀 포켓피봇 대량 돌파"})
 
             if ticker in BEAR_ETFS:
                 if (last['Close'] > last['MA20']) and (last['MA20'] > prev['MA20']) and (change_pct > 1.0):
-                    bear_defense.append({**base_info, "타점": "🚨 하락장 진입: 인버스 돌파", "승률기대": "방어용"})
+                    bear_defense.append({**base_info, "타점": "🚨 하락장 방어 돌파"})
                 
         except Exception as e: continue
             
-    return signature_swing, bear_defense, momentum
+    return vcp_swing, bear_defense, momentum, current_vix, vix_limit
 
 # ==========================================
-# 8. 메인 렌더링 파트
+# 7. 메인 렌더링 및 프리미엄 UI
 # ==========================================
 col_main, col_side = st.columns([7, 3])
 
 if 'scanned' not in st.session_state:
     st.session_state.scanned = False
-    st.session_state.signature_swing = []
+    st.session_state.vcp_swing = []
 
 with col_main:
-    st.markdown("### ⚡ All-Weather: 궁극의 주도주 스윙 및 하락장 방어 스캔")
-    if st.button("🚀 월가 0.01% 궁극의 정밀 스캔 가동", use_container_width=True):
-        with st.spinner("상대강도(RS) 점수 계산 및 미너비니 템플릿 가동 중... (약 20초 소요)"):
-            signature_swing, bear_defense, momentum = analyze_practical_signals()
-            st.session_state.signature_swing = signature_swing
+    if st.button("🚀 100억 엔진 가동 (헤지펀드 알고리즘 & PCE 매크로 스캔)", use_container_width=True):
+        with st.spinner("월가 스마트머니 자금 추적 및 극압축 VCP 맵핑 중... (약 20초 소요)"):
+            vcp_swing, bear_defense, momentum, current_vix, vix_limit = analyze_hedgefund_signals()
+            st.session_state.vcp_swing = vcp_swing
             st.session_state.scanned = True
             
-            if signature_swing:
-                top3_to_save = pd.DataFrame(signature_swing).sort_values("변동%", ascending=False).head(3).to_dict('records')
-                save_history(top3_to_save)
+            if vcp_swing: save_history(pd.DataFrame(vcp_swing).sort_values("원가", ascending=False).head(3).to_dict('records'))
 
-            c1, c2, c3 = st.columns(3)
-            c1.markdown(f"<div class='metric-box'><div class='metric-title'>👑 미너비니 20일선 스윙</div><div class='metric-value text-blue'>{len(signature_swing)}건</div></div>", unsafe_allow_html=True)
-            c2.markdown(f"<div class='metric-box'><div class='metric-title'>🚨 하락장 방어 (인버스)</div><div class='metric-value text-red'>{len(bear_defense)}건</div></div>", unsafe_allow_html=True)
-            c3.markdown(f"<div class='metric-box'><div class='metric-title'>🚀 찐주도주 돌파</div><div class='metric-value text-green'>{len(momentum)}건</div></div>", unsafe_allow_html=True)
+            # 100억 대시보드 렌더링
+            safe_status = "🟢 안전 (공격 베팅)" if current_vix < vix_limit else "🔴 위험 (현금 관망)"
+            st.markdown(f"""
+            <div class='dashboard-grid'>
+                <div class='dash-card'>
+                    <div class='dash-title'>👑 극압축 VCP 스윙</div>
+                    <div class='dash-value' style='color:#F59E0B;'>{len(vcp_swing)}건</div>
+                    <div class='dash-sub'>세력 멱살잡이 타점</div>
+                </div>
+                <div class='dash-card'>
+                    <div class='dash-title'>🚀 포켓피봇 돌파</div>
+                    <div class='dash-value' style='color:#10B981;'>{len(momentum)}건</div>
+                    <div class='dash-sub'>기관 대량 매수 포착</div>
+                </div>
+                <div class='dash-card'>
+                    <div class='dash-title'>🚨 인버스 (하락 방어)</div>
+                    <div class='dash-value' style='color:#EF4444;'>{len(bear_defense)}건</div>
+                    <div class='dash-sub'>시장 붕괴 헷징 타점</div>
+                </div>
+                <div class='dash-card'>
+                    <div class='dash-title'>🛡️ PCE 매크로 통제실</div>
+                    <div class='dash-value' style='color:#3B82F6;'>{safe_status}</div>
+                    <div class='dash-sub'>현재 VIX: {current_vix:.2f} / 허용치: {vix_limit}</div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
             
-            st.write("")
-            tab1, tab2, tab3 = st.tabs(["👑 미너비니 시그니처 (S++급)", "🚨 하락장 인버스 방어", "🚀 주도주 신고가 돌파"])
+            tab1, tab2, tab3 = st.tabs(["👑 1순위: 극압축 VCP (100억 타점)", "🚀 2순위: 포켓 피봇 돌파", "🚨 3순위: 인버스 방어"])
             
-            def display_data(data, msg):
+            def display_premium_data(data, msg):
                 if data:
-                    df = pd.DataFrame(data).sort_values("변동%", ascending=False).drop(columns=['변동%', '원가']).reset_index(drop=True)
-                    st.dataframe(df, use_container_width=True)
+                    df = pd.DataFrame(data).drop(columns=['원가'])
+                    # 달러 표시 포맷팅
+                    df['현재가'] = df['현재가'].apply(lambda x: f"${x:,.2f}")
+                    df['손절가(ATR)'] = df['손절가(ATR)'].apply(lambda x: f"${x:,.2f}")
+                    st.dataframe(df, use_container_width=True, hide_index=True)
                 else: st.info(msg)
 
-            with tab1: display_data(signature_swing, "현재 미너비니 템플릿을 통과한 종목 중 20일선 눌림목 자리가 없습니다. (현금 관망)")
-            with tab2: display_data(bear_defense, "현재 시장은 상승장이며, 뚜렷한 하락(인버스) 타점이 없습니다.")
-            with tab3: display_data(momentum, "신고가 돌파 종목이 없습니다.")
+            with tab1: display_premium_data(vcp_swing, "현재 헤지펀드 필터(VCP 압축+거래량 마름)를 완벽히 통과한 주도주가 없습니다. (100억 군자금 보존 요망)")
+            with tab2: display_premium_data(momentum, "포켓 피봇(대량 거래 돌파) 종목이 없습니다.")
+            with tab3: display_premium_data(bear_defense, "현재 인버스 돌파 타점이 없습니다.")
 
 # ==========================================
-# 9. 우측 사이드바 (과거 수익률 검증 & 뉴스)
+# 8. 우측 사이드바 (과거 수익률 검증 & 뉴스)
 # ==========================================
 with col_side:
-    st.markdown("### 🕵️‍♂️ 직전 추천종목 자동 검증")
+    st.markdown("### 🕵️‍♂️ 직전 100억 타점 검증")
     past_history = load_history()
     
     if past_history:
-        st.caption(f"기록된 시간: {past_history[0]['시간']}")
+        st.caption(f"기록 시간: {past_history[0]['시간']}")
         for item in past_history:
-            ticker = item['티커']
-            old_price = item['추천가']
+            ticker, old_price = item['티커'], item['추천가']
             try:
                 curr_price = yf.Ticker(ticker).history(period="1d")['Close'].iloc[-1]
                 profit_pct = ((curr_price - old_price) / old_price) * 100
-                card_class = "history-card-up" if profit_pct > 0 else "history-card-down"
-                arrow = "🔥" if profit_pct > 0 else "❄️"
-                color = "#EF4444" if profit_pct > 0 else "#3B82F6"
+                color, arrow = ("#EF4444", "🔥") if profit_pct > 0 else ("#3B82F6", "❄️")
+                bg_class = "history-card-up" if profit_pct > 0 else "history-card-down"
                 
                 st.markdown(f"""
-                <div class='{card_class}'>
-                    <div>
-                        <div style='font-weight:bold; font-size:16px; color:#FFFFFF;'>{ticker}</div>
-                        <div style='font-size:11px; color:#8A94A6;'>추천가 ${old_price:.2f} ➔ 현재가 ${curr_price:.2f}</div>
-                    </div>
-                    <div style='font-size:18px; font-weight:bold; color:{color};'>
-                        {arrow} {profit_pct:+.2f}%
-                    </div>
+                <div class='{bg_class}'>
+                    <div><div style='font-weight:bold; font-size:16px;'>{ticker}</div>
+                    <div style='font-size:11px; color:#94A3B8;'>${old_price:,.2f} ➔ ${curr_price:,.2f}</div></div>
+                    <div style='font-size:18px; font-weight:bold; color:{color};'>{arrow} {profit_pct:+.2f}%</div>
                 </div>
                 """, unsafe_allow_html=True)
-            except: st.write(f"{ticker}: 실시간 데이터 로딩 불가")
-    else: st.info("과거 추천 기록이 없습니다. 스캔을 돌려주세요.")
+            except: pass
+    else: st.info("과거 추천 기록이 없습니다.")
 
     st.markdown("<br>", unsafe_allow_html=True)
-    news_tab1, news_tab2 = st.tabs(["🌐 전체 시장 뉴스", "🚨 특징주 속보"])
-    def render_clickable_news(keyword):
-        news_list = get_live_clickable_news(keyword)
-        if news_list:
-            for n in news_list:
-                st.markdown(f"""<a href="{n['link']}" target="_blank"><div class='news-box'><div class='news-title'>⚡ {n['title']}</div><div class='news-meta'><span>{n['source']}</span><span style="color:#F59E0B;">{n['time']}</span></div></div></a>""", unsafe_allow_html=True)
-        else: st.write("새로운 뉴스를 수집 중입니다.")
+    news_tab1, news_tab2 = st.tabs(["🌐 100억 거시경제", "🚨 주도주 속보"])
+    def render_news(keyword):
+        for n in get_live_clickable_news(keyword):
+            st.markdown(f"<a href='{n['link']}' target='_blank'><div class='news-box'><div class='news-title'>⚡ {n['title']}</div><div class='news-meta'><span>{n['source']}</span><span style='color:#F59E0B;'>{n['time']}</span></div></div></a>", unsafe_allow_html=True)
 
-    with news_tab1: render_clickable_news("미국증시 OR 뉴욕증시 OR 연준")
-    with news_tab2: render_clickable_news("나스닥 속보 OR 테슬라 OR 반도체")
+    with news_tab1: render_news("미국 PCE OR 금리인하 OR 연준")
+    with news_tab2: render_news("엔비디아 OR 나스닥 특징주")
