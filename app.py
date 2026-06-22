@@ -1,5 +1,5 @@
 import streamlit as st
-import streamlit.components.v1 as components  # 🔥 캘린더 위젯을 위한 컴포넌트 추가
+import streamlit.components.v1 as components 
 import yfinance as yf
 import pandas as pd
 import requests
@@ -36,7 +36,7 @@ if not st.session_state.authenticated:
     st.stop() 
 
 # ==========================================
-# 3. 프리미엄 CSS (황제의 탄생 5열 레이아웃 최적화)
+# 3. 프리미엄 CSS (5열 레이아웃 최적화)
 # ==========================================
 st.markdown("""
 <style>
@@ -95,7 +95,7 @@ def get_ticker_data():
 st.markdown(get_ticker_data(), unsafe_allow_html=True)
 
 st.markdown("<h1 style='text-align: center; color: #F59E0B; font-weight: 900; margin-bottom: 0;'>👑 남현석과 함께 100억 만들기</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #94A3B8; margin-bottom: 30px;'>WallStreet v12.5 | 황제의 탄생 초정밀 퀀트 탑재 스캐너</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #94A3B8; margin-bottom: 30px;'>WallStreet v12.6 | 황제의 탄생 스캐너 & 전체 기술적 분석망 통합</p>", unsafe_allow_html=True)
 
 # ==========================================
 # 5. 데이터 저장 및 뉴스 모듈
@@ -158,20 +158,20 @@ def get_fear_greed_index():
 fgi_score, fgi_text, fgi_color = get_fear_greed_index()
 
 # ==========================================
-# 7. 월가 상위 0.01% AI 퀀트 엔진 ([황제의 탄생] 모듈 융합)
+# 7. 월가 상위 0.01% AI 퀀트 엔진
 # ==========================================
+# 🔥 주군께서 주로 주시하는 MU, SIMO, NXPI, RKLB, SPCH 등 최우선 배치
 BULL_STOCKS = [
-    "AAPL", "MSFT", "NVDA", "GOOGL", "AMZN", "META", "TSLA",
-    "AVGO", "TSM", "AMD", "QCOM", "ASML", "AMAT", "MU", "LRCX", "INTC", "ARM", "SMCI", "SIMO", "WDC", "TXN", "NXPI",
+    "NXPI", "MU", "SIMO", "RKLB", "SPCH", "AAPL", "MSFT", "NVDA", "GOOGL", "AMZN", "META", "TSLA",
+    "AVGO", "TSM", "AMD", "QCOM", "ASML", "AMAT", "LRCX", "INTC", "ARM", "SMCI", "WDC", "TXN",
     "CRM", "ADBE", "NFLX", "CSCO", "ORCL", "NOW", "INTU", "UBER", "SNOW", "PLTR", "CRWD", "PANW", "FTNT", "DDOG", "NET", "MDB", "TEAM", "WDAY",
-    "V", "MA", "JPM", "BAC", "WFC", "GS", "MS", "AXP", "PYPL", "SQ", "COIN", "MARA", "RIOT", "MSTR", "HOOD", "SOFI", "AFRM", 
-    "RKLB", "ASTS", "LUNR"
+    "V", "MA", "JPM", "BAC", "WFC", "GS", "MS", "AXP", "PYPL", "SQ", "COIN", "MARA", "RIOT", "MSTR", "HOOD", "SOFI", "AFRM", "ASTS", "LUNR"
 ]
 BEAR_ETFS = ["SH", "PSQ", "QID"]
 
 def analyze_hedgefund_signals():
     data = yf.download(BULL_STOCKS + BEAR_ETFS + ['^GSPC', '^VIX', 'TLT'], period="2y", group_by='ticker', progress=False)
-    vcp_swing, bear_defense, momentum, emperor_stocks = [], [], [], []
+    vcp_swing, bear_defense, momentum, emperor_stocks, all_tech_analysis = [], [], [], [], []
     
     try:
         vix_df, tlt_df = data['^VIX'].dropna(), data['TLT'].dropna()
@@ -187,13 +187,11 @@ def analyze_hedgefund_signals():
             df = data[ticker].dropna()
             if len(df) < 255: continue
             
-            # 기본 이동평균선 연산
             df['MA20'], df['MA50'] = df['Close'].rolling(window=20).mean(), df['Close'].rolling(window=50).mean()
-            df['MA120'] = df['Close'].rolling(window=120).mean()  # 🔥 황제의 탄생 장기 정배열 지표
+            df['MA120'] = df['Close'].rolling(window=120).mean()  
             df['MA150'], df['MA200'] = df['Close'].rolling(window=150).mean(), df['Close'].rolling(window=200).mean()
             df['High52'], df['Low52'] = df['High'].rolling(window=250).max(), df['Low'].rolling(window=250).min()
             
-            # 🔥 황제의 탄생 전용 변동성/거래량 정밀 연산 지표
             df['Vol_MA20'] = df['Volume'].rolling(window=20).mean()
             df['Max_20'] = df['High'].rolling(window=20).max()
             df['Min_20'] = df['Low'].rolling(window=20).min()
@@ -232,6 +230,21 @@ def analyze_hedgefund_signals():
             }
             
             if ticker in BULL_STOCKS:
+                # ─── 📊 [신규 복구: 전체 관심종목 기술적 분석 리스트] ───
+                is_uptrend_general = (last['Close'] > last['MA150'] and last['MA150'] > last['MA200'])
+                tech_status = "🔥 정배열 (상승)" if is_uptrend_general else "❄️ 역배열 (조정/하락)"
+                dist_ma20_pct = ((last['Close'] - last['MA20']) / last['MA20']) * 100
+                
+                all_tech_analysis.append({
+                    "티커": ticker,
+                    "현재가": float(last['Close']),
+                    "당일등락": change_str,
+                    "추세 현황": tech_status,
+                    "20일선 이격도": f"{dist_ma20_pct:+.2f}%",
+                    "💥 매수 폭발 점수": f"{buy_score}점",
+                    "시장 주도력": rs_rating
+                })
+
                 # ─── 👑 [특급 모듈: 황제의 탄생 필승 패턴 검증] ───
                 is_emp_uptrend = (last['MA120'] > last['MA200']) and (last['Close'] > last['MA120'])
                 is_emp_squeezed = last['Volatility_20'] < 15.0
@@ -244,10 +257,8 @@ def analyze_hedgefund_signals():
                     emperor_stocks.append({**base_info, "타점": "👑 황제의 탄생 (특급)"})
 
                 # ─── 🔮 [기존 모듈: 극압축 VCP 스윙 검증] ───
-                is_uptrend = (last['Close'] > last['MA150'] and last['MA150'] > last['MA200'] and 
-                              last['MA200'] > df['MA200'].iloc[-20] and last['Close'] > last['MA50'] and
-                              last['Close'] >= last['Low52'] * 1.30 and last['Close'] >= last['High52'] * 0.75)
-                
+                is_uptrend = is_uptrend_general and (last['MA200'] > df['MA200'].iloc[-20] and 
+                             last['Close'] > last['MA50'] and last['Close'] >= last['Low52'] * 1.30 and last['Close'] >= last['High52'] * 0.75)
                 is_vcp_extreme = buy_score >= 70
                 is_vol_dry = df['Volume'].iloc[-3:].mean() < (last['Vol_50MA'] * 0.85)
                 is_near_ma20 = (last['MA20'] * 0.98 <= last['Close'] <= last['MA20'] * 1.05)
@@ -266,7 +277,7 @@ def analyze_hedgefund_signals():
                 
         except Exception as e: continue
             
-    return vcp_swing, bear_defense, momentum, emperor_stocks, current_vix, vix_limit
+    return vcp_swing, bear_defense, momentum, emperor_stocks, all_tech_analysis, current_vix, vix_limit
 
 # ==========================================
 # 8. 메인 렌더링 파트 (좌측 전황 레이더 디스플레이)
@@ -275,18 +286,13 @@ col_main, col_side = st.columns([7, 3])
 
 if 'scanned' not in st.session_state:
     st.session_state.scanned = False
-    st.session_state.vcp_swing = []
-    st.session_state.emperor_stocks = []
 
 with col_main:
-    if st.button("🚀 100억 엔진 가동 (황제의 탄생 및 순수 개별주 포착)", use_container_width=True):
-        with st.spinner("월가 0.01% 수학 알고리즘 및 황제주 스캔 맵핑 중... (약 20초 소요)"):
-            vcp_swing, bear_defense, momentum, emperor_stocks, current_vix, vix_limit = analyze_hedgefund_signals()
-            st.session_state.vcp_swing = vcp_swing
-            st.session_state.emperor_stocks = emperor_stocks
+    if st.button("🚀 100억 엔진 전체 레이더 가동 (황제의 탄생 & 전체 종목 맵핑)", use_container_width=True):
+        with st.spinner("월가 0.01% 수학 알고리즘 가동 및 전체 관심종목 상태 동기화 중... (약 20초 소요)"):
+            vcp_swing, bear_defense, momentum, emperor_stocks, all_tech_analysis, current_vix, vix_limit = analyze_hedgefund_signals()
             st.session_state.scanned = True
             
-            # 히스토리 기록 연동 (황제주 우선 순위 저장)
             combined_priority = emperor_stocks + vcp_swing
             if combined_priority: 
                 save_history(pd.DataFrame(combined_priority).sort_values("💥 매수 폭발 점수", ascending=False).head(3).to_dict('records'))
@@ -301,9 +307,9 @@ with col_main:
                     <div class='dash-sub'>최상위 필승 압축주</div>
                 </div>
                 <div class='dash-card'>
-                    <div class='dash-title'>🔮 극압축 VCP 스윙</div>
-                    <div class='dash-value' style='color:#A855F7;'>{len(vcp_swing)}건</div>
-                    <div class='dash-sub'>세력 멱살잡이 타점</div>
+                    <div class='dash-title'>📊 주도주 분석망</div>
+                    <div class='dash-value' style='color:#A855F7;'>{len(all_tech_analysis)}건</div>
+                    <div class='dash-sub'>관심종목 기술적 스캔</div>
                 </div>
                 <div class='dash-card'>
                     <div class='dash-title'>🚀 포켓피봇 돌파</div>
@@ -323,19 +329,20 @@ with col_main:
             </div>
             """, unsafe_allow_html=True)
             
-            # 🔥 황제의 탄생 최상위 탭 신설 배치!
-            tab0, tab1, tab2, tab3 = st.tabs([
-                "👑 특급 1순위: 황제의 탄생 (Emperors)", 
-                "🔮 2순위: 극압축 VCP (100억 타점)", 
+            # 🔥 5개의 탭으로 전체 확장 (전체 분석망 추가)
+            tab0, tab1, tab2, tab3, tab4 = st.tabs([
+                "👑 특급 1순위: 황제의 탄생", 
+                "🔮 2순위: 극압축 VCP", 
                 "🚀 3순위: 포켓 피봇 돌파", 
-                "🚨 4순위: 인버스 방어"
+                "🚨 4순위: 인버스 방어",
+                "📊 [전체] 관심종목 기술적 현황"
             ])
             
             def display_premium_data(data, msg):
                 if data:
                     df = pd.DataFrame(data).sort_values("💥 매수 폭발 점수", ascending=False) if "💥 매수 폭발 점수" in pd.DataFrame(data).columns else pd.DataFrame(data)
-                    df['현재가'] = df['현재가'].apply(lambda x: f"${x:,.2f}")
-                    df['손절가(ATR)'] = df['손절가(ATR)'].apply(lambda x: f"${x:,.2f}")
+                    if '현재가' in df.columns: df['현재가'] = df['현재가'].apply(lambda x: f"${x:,.2f}")
+                    if '손절가(ATR)' in df.columns: df['손절가(ATR)'] = df['손절가(ATR)'].apply(lambda x: f"${x:,.2f}")
                     st.dataframe(df, use_container_width=True, hide_index=True)
                 else: st.info(msg)
 
@@ -343,12 +350,14 @@ with col_main:
             with tab1: display_premium_data(vcp_swing, "현재 VCP 압축을 통과한 완벽한 개별 주도주가 없습니다.")
             with tab2: display_premium_data(momentum, "포켓 피봇(대량 거래 돌파) 개별 종목이 없습니다.")
             with tab3: display_premium_data(bear_defense, "현재 인버스 돌파 타점이 없습니다.")
+            with tab4: 
+                st.markdown("<p style='font-size:13px; color:#94A3B8;'>💡 사령관님, 타점(황제/VCP)이 오지 않았더라도 전체 관심종목(MU, SIMO, NXPI 등)의 <b>추세 및 20일선 이격도</b>를 여기서 확인하시고 작전을 지시해 주십시오.</p>", unsafe_allow_html=True)
+                display_premium_data(all_tech_analysis, "데이터가 없습니다.")
 
 # ==========================================
 # 9. 우측 사이드바 (거시경제 캘린더 & 검증 시스템)
 # ==========================================
 with col_side:
-    # 🔥 주간 월가 핵심 일정 (TradingView 실시간 캘린더 위젯)
     st.markdown("### 📅 이번 주 월가 핵심 일정")
     st.markdown("<p style='font-size:12px; color:#8A94A6; margin-bottom:10px;'>FOMC, 실적 발표, CPI 등 시장을 뒤흔들 중요 이벤트 (미국 한정)</p>", unsafe_allow_html=True)
     
@@ -372,7 +381,6 @@ with col_side:
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # 🕵️‍♂️ 직전 추천종목 검증
     st.markdown("### 🕵️‍♂️ 시스템 자동 추천 검증")
     past_history = load_history()
     
