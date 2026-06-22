@@ -36,7 +36,7 @@ if not st.session_state.authenticated:
     st.stop() 
 
 # ==========================================
-# 3. 프리미엄 CSS
+# 3. 프리미엄 CSS (황제의 탄생 5열 레이아웃 최적화)
 # ==========================================
 st.markdown("""
 <style>
@@ -49,11 +49,11 @@ st.markdown("""
     .ticker-item { padding: 0 40px; font-size: 15px; font-weight: 700; color: #FFFFFF; flex-shrink: 0; }
     .ticker-up { color: #EF4444; } .ticker-down { color: #3B82F6; } .ticker-name { color: #94A3B8; font-size: 13px; margin-right: 8px; }
     
-    .dashboard-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
-    .dash-card { background: linear-gradient(145deg, #1A1F2B 0%, #11151D 100%); padding: 20px; border-radius: 12px; border: 1px solid #2D3748; box-shadow: 0 4px 6px rgba(0,0,0,0.3); text-align: center; }
-    .dash-title { color: #94A3B8; font-size: 13px; font-weight: bold; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
-    .dash-value { font-size: 28px; font-weight: 900; color: #FFFFFF; }
-    .dash-sub { font-size: 12px; color: #64748B; margin-top: 5px; }
+    .dashboard-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 20px; }
+    .dash-card { background: linear-gradient(145deg, #1A1F2B 0%, #11151D 100%); padding: 18px; border-radius: 12px; border: 1px solid #2D3748; box-shadow: 0 4px 6px rgba(0,0,0,0.3); text-align: center; }
+    .dash-title { color: #94A3B8; font-size: 12px; font-weight: bold; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+    .dash-value { font-size: 24px; font-weight: 900; color: #FFFFFF; }
+    .dash-sub { font-size: 11px; color: #64748B; margin-top: 5px; }
     
     .news-box { background-color: #1A1F2B; padding: 15px; margin-bottom: 12px; border-radius: 8px; border-left: 4px solid #F59E0B; transition: 0.2s; }
     .news-box:hover { background-color: #252B3B; transform: translateX(5px); }
@@ -95,7 +95,7 @@ def get_ticker_data():
 st.markdown(get_ticker_data(), unsafe_allow_html=True)
 
 st.markdown("<h1 style='text-align: center; color: #F59E0B; font-weight: 900; margin-bottom: 0;'>👑 남현석과 함께 100억 만들기</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #94A3B8; margin-bottom: 30px;'>WallStreet v11.3 | 거시경제 일정 캘린더 탑재 & 무결점 퀀트 엔진</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #94A3B8; margin-bottom: 30px;'>WallStreet v12.5 | 황제의 탄생 초정밀 퀀트 탑재 스캐너</p>", unsafe_allow_html=True)
 
 # ==========================================
 # 5. 데이터 저장 및 뉴스 모듈
@@ -158,7 +158,7 @@ def get_fear_greed_index():
 fgi_score, fgi_text, fgi_color = get_fear_greed_index()
 
 # ==========================================
-# 7. 월가 상위 0.01% AI 퀀트 엔진
+# 7. 월가 상위 0.01% AI 퀀트 엔진 ([황제의 탄생] 모듈 융합)
 # ==========================================
 BULL_STOCKS = [
     "AAPL", "MSFT", "NVDA", "GOOGL", "AMZN", "META", "TSLA",
@@ -171,7 +171,7 @@ BEAR_ETFS = ["SH", "PSQ", "QID"]
 
 def analyze_hedgefund_signals():
     data = yf.download(BULL_STOCKS + BEAR_ETFS + ['^GSPC', '^VIX', 'TLT'], period="2y", group_by='ticker', progress=False)
-    vcp_swing, bear_defense, momentum = [], [], []
+    vcp_swing, bear_defense, momentum, emperor_stocks = [], [], [], []
     
     try:
         vix_df, tlt_df = data['^VIX'].dropna(), data['TLT'].dropna()
@@ -187,9 +187,17 @@ def analyze_hedgefund_signals():
             df = data[ticker].dropna()
             if len(df) < 255: continue
             
+            # 기본 이동평균선 연산
             df['MA20'], df['MA50'] = df['Close'].rolling(window=20).mean(), df['Close'].rolling(window=50).mean()
+            df['MA120'] = df['Close'].rolling(window=120).mean()  # 🔥 황제의 탄생 장기 정배열 지표
             df['MA150'], df['MA200'] = df['Close'].rolling(window=150).mean(), df['Close'].rolling(window=200).mean()
             df['High52'], df['Low52'] = df['High'].rolling(window=250).max(), df['Low'].rolling(window=250).min()
+            
+            # 🔥 황제의 탄생 전용 변동성/거래량 정밀 연산 지표
+            df['Vol_MA20'] = df['Volume'].rolling(window=20).mean()
+            df['Max_20'] = df['High'].rolling(window=20).max()
+            df['Min_20'] = df['Low'].rolling(window=20).min()
+            df['Volatility_20'] = (df['Max_20'] - df['Min_20']) / df['Min_20'] * 100
             
             tr1 = df['High'] - df['Low']
             tr2 = np.abs(df['High'] - df['Close'].shift())
@@ -224,6 +232,18 @@ def analyze_hedgefund_signals():
             }
             
             if ticker in BULL_STOCKS:
+                # ─── 👑 [특급 모듈: 황제의 탄생 필승 패턴 검증] ───
+                is_emp_uptrend = (last['MA120'] > last['MA200']) and (last['Close'] > last['MA120'])
+                is_emp_squeezed = last['Volatility_20'] < 15.0
+                is_emp_volume_dry = last['Volume'] < (last['Vol_MA20'] * 0.5)
+                dist_ma20 = abs(last['Close'] - last['MA20']) / last['MA20']
+                dist_ma50 = abs(last['Close'] - last['MA50']) / last['MA50']
+                is_emp_supported = (dist_ma20 < 0.03) or (dist_ma50 < 0.03)
+                
+                if is_emp_uptrend and is_emp_squeezed and is_emp_volume_dry and is_emp_supported:
+                    emperor_stocks.append({**base_info, "타점": "👑 황제의 탄생 (특급)"})
+
+                # ─── 🔮 [기존 모듈: 극압축 VCP 스윙 검증] ───
                 is_uptrend = (last['Close'] > last['MA150'] and last['MA150'] > last['MA200'] and 
                               last['MA200'] > df['MA200'].iloc[-20] and last['Close'] > last['MA50'] and
                               last['Close'] >= last['Low52'] * 1.30 and last['Close'] >= last['High52'] * 0.75)
@@ -233,8 +253,9 @@ def analyze_hedgefund_signals():
                 is_near_ma20 = (last['MA20'] * 0.98 <= last['Close'] <= last['MA20'] * 1.05)
                 
                 if (current_vix < vix_limit) and is_uptrend and is_near_ma20 and is_vcp_extreme and is_vol_dry and (change_pct > 0):
-                    vcp_swing.append({**base_info, "타점": "👑 극압축 VCP 눌림목"})
+                    vcp_swing.append({**base_info, "타점": "🔮 극압축 VCP 눌림목"})
                     
+                # ─── 🚀 [기존 모듈: 포켓 피봇 대량 돌파 검증] ───
                 is_pocket_pivot = (last['Volume'] > df['Volume'].rolling(10).max().iloc[-2]) and (change_pct >= 2.0)
                 if is_uptrend and is_pocket_pivot and (last['Close'] > df['High'].rolling(20).max().iloc[-2]):
                     momentum.append({**base_info, "타점": "🚀 포켓피봇 대량 돌파"})
@@ -245,33 +266,43 @@ def analyze_hedgefund_signals():
                 
         except Exception as e: continue
             
-    return vcp_swing, bear_defense, momentum, current_vix, vix_limit
+    return vcp_swing, bear_defense, momentum, emperor_stocks, current_vix, vix_limit
 
 # ==========================================
-# 8. 메인 렌더링 파트 (좌측)
+# 8. 메인 렌더링 파트 (좌측 전황 레이더 디스플레이)
 # ==========================================
 col_main, col_side = st.columns([7, 3])
 
 if 'scanned' not in st.session_state:
     st.session_state.scanned = False
     st.session_state.vcp_swing = []
+    st.session_state.emperor_stocks = []
 
 with col_main:
-    if st.button("🚀 100억 엔진 가동 (순수 개별주 A+급만 포착)", use_container_width=True):
-        with st.spinner("월가 0.01% 수학 알고리즘으로 전 종목 맵핑 중... (약 20초 소요)"):
-            vcp_swing, bear_defense, momentum, current_vix, vix_limit = analyze_hedgefund_signals()
+    if st.button("🚀 100억 엔진 가동 (황제의 탄생 및 순수 개별주 포착)", use_container_width=True):
+        with st.spinner("월가 0.01% 수학 알고리즘 및 황제주 스캔 맵핑 중... (약 20초 소요)"):
+            vcp_swing, bear_defense, momentum, emperor_stocks, current_vix, vix_limit = analyze_hedgefund_signals()
             st.session_state.vcp_swing = vcp_swing
+            st.session_state.emperor_stocks = emperor_stocks
             st.session_state.scanned = True
             
-            if vcp_swing: save_history(pd.DataFrame(vcp_swing).sort_values("💥 매수 폭발 점수", ascending=False).head(3).to_dict('records'))
+            # 히스토리 기록 연동 (황제주 우선 순위 저장)
+            combined_priority = emperor_stocks + vcp_swing
+            if combined_priority: 
+                save_history(pd.DataFrame(combined_priority).sort_values("💥 매수 폭발 점수", ascending=False).head(3).to_dict('records'))
             
             safe_status = "🟢 공격 베팅 (안전)" if current_vix < vix_limit else "🔴 현금 관망 (위험)"
             
             st.markdown(f"""
             <div class='dashboard-grid'>
                 <div class='dash-card'>
-                    <div class='dash-title'>👑 극압축 VCP 스윙</div>
-                    <div class='dash-value' style='color:#F59E0B;'>{len(vcp_swing)}건</div>
+                    <div class='dash-title'>👑 황제의 탄생 (특급)</div>
+                    <div class='dash-value' style='color:#F59E0B;'>{len(emperor_stocks)}건</div>
+                    <div class='dash-sub'>최상위 필승 압축주</div>
+                </div>
+                <div class='dash-card'>
+                    <div class='dash-title'>🔮 극압축 VCP 스윙</div>
+                    <div class='dash-value' style='color:#A855F7;'>{len(vcp_swing)}건</div>
                     <div class='dash-sub'>세력 멱살잡이 타점</div>
                 </div>
                 <div class='dash-card'>
@@ -292,7 +323,13 @@ with col_main:
             </div>
             """, unsafe_allow_html=True)
             
-            tab1, tab2, tab3 = st.tabs(["👑 1순위: 극압축 VCP (100억 타점)", "🚀 2순위: 포켓 피봇 돌파", "🚨 3순위: 인버스 방어"])
+            # 🔥 황제의 탄생 최상위 탭 신설 배치!
+            tab0, tab1, tab2, tab3 = st.tabs([
+                "👑 특급 1순위: 황제의 탄생 (Emperors)", 
+                "🔮 2순위: 극압축 VCP (100억 타점)", 
+                "🚀 3순위: 포켓 피봇 돌파", 
+                "🚨 4순위: 인버스 방어"
+            ])
             
             def display_premium_data(data, msg):
                 if data:
@@ -302,6 +339,7 @@ with col_main:
                     st.dataframe(df, use_container_width=True, hide_index=True)
                 else: st.info(msg)
 
+            with tab0: display_premium_data(emperor_stocks, "현재 [황제의 탄생] 조건에 완벽히 부합하는 초특급 주도주가 없습니다.")
             with tab1: display_premium_data(vcp_swing, "현재 VCP 압축을 통과한 완벽한 개별 주도주가 없습니다.")
             with tab2: display_premium_data(momentum, "포켓 피봇(대량 거래 돌파) 개별 종목이 없습니다.")
             with tab3: display_premium_data(bear_defense, "현재 인버스 돌파 타점이 없습니다.")
@@ -310,7 +348,7 @@ with col_main:
 # 9. 우측 사이드바 (거시경제 캘린더 & 검증 시스템)
 # ==========================================
 with col_side:
-    # 🔥 신규 무기: 주간 월가 핵심 일정 (TradingView 실시간 캘린더 위젯)
+    # 🔥 주간 월가 핵심 일정 (TradingView 실시간 캘린더 위젯)
     st.markdown("### 📅 이번 주 월가 핵심 일정")
     st.markdown("<p style='font-size:12px; color:#8A94A6; margin-bottom:10px;'>FOMC, 실적 발표, CPI 등 시장을 뒤흔들 중요 이벤트 (미국 한정)</p>", unsafe_allow_html=True)
     
